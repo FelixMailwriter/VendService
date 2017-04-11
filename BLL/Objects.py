@@ -7,6 +7,11 @@ from DAL.DBConnector import DbConnector
 import base64
 import EditItem
 
+class ObjController(object):
+    
+    def __init__(self):
+
+
 class ObjHandler(QObject):
     def __init__(self, window):
         QObject.__init__(self)

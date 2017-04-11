@@ -20,10 +20,4 @@ class MainWindow(QObject):
         path=os.path.abspath("UI/UIForms/mainForm.ui")
         self.window=uic.loadUi(path)
         
-                
-
-            
-        
-        
-        
         
