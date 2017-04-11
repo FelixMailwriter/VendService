@@ -91,6 +91,8 @@ class DbConnector():
         itemName=params["ItemName"]
         itemPrice=params["ItemPrice"]
         itemIcon=icon
-        
+    
+    def getItemIconById(self, id):
+        pass    
         
           

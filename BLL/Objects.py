@@ -7,24 +7,19 @@ from DAL.DBConnector import DbConnector
 import base64
 import EditItem
 
-class ObjController(object):
-    
-    def __init__(self):
-
 
 class ObjHandler(QObject):
-    def __init__(self, window):
+    def __init__(self, form):
         QObject.__init__(self)
         self.DbConnector=DbConnector()
-        self.window=window.window
-        self.ItemTable=self.window.ItemTable
+        self.form=form
+        self.ItemTable=self.form.window.ItemTable
         self.ItemTable.cellClicked.connect(self.refreshIcon)
-        self.window.btn_AddItem.clicked.connect(self.addItem)
-        self.window.btn_EditItem.clicked.connect(self.editItem)
         self.errWindow=Errors.Errors("")
+        self.connect(self.form, QtCore.SIGNAL("AddItemClicked"), self.addItem)
+        self.connect(self.form, QtCore.SIGNAL("EditItemClicked"), self.editItem)
         
     def getItems(self):
-        #self.ItemTable.clear()
         self.ItemTable.setRowCount(0)
         rows=self.DbConnector.getItems()
         counter=0
@@ -49,7 +44,7 @@ class ObjHandler(QObject):
         picBytes = base64.b64decode(result)
         qpixmap=QtGui.QPixmap()
         qpixmap.loadFromData(picBytes)
-        self.window.ibl_ItemIcon.setPixmap(qpixmap)
+        self.form.window.ibl_ItemIcon.setPixmap(qpixmap)
 
     def addItem(self):
         count=self.ItemTable.rowCount()+1
@@ -75,7 +70,7 @@ class ObjHandler(QObject):
         param["itemId"]=int(Items[0].text())
         param["itemName"]=Items[1].text()
         param["itemPrice"]=Items[2].text()
-        param["itemIcon"]=self.window.ibl_ItemIcon.pixmap()
+        param["itemIcon"]=self.form.window.ibl_ItemIcon.pixmap()
         param["DbConnector"]=self.DbConnector
         self.editWindow=EditItem.EditItemHandler(param, 'Edit')
         self.connect(self.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.getItems)
