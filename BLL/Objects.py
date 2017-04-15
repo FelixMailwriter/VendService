@@ -1,14 +1,14 @@
 # -*- coding:utf-8 -*-
 
-import Errors
 from PyQt4 import QtCore, QtGui
 from PyQt4.Qt import QObject, QMessageBox 
 from DAL.DBConnector import DbConnector
 import base64
 import EditItem
-
+import Errors
 
 class ObjHandler(QObject):
+    
     def __init__(self, form):
         QObject.__init__(self)
         self.DbConnector=DbConnector()
@@ -18,10 +18,11 @@ class ObjHandler(QObject):
         self.errWindow=Errors.Errors("")
         self.connect(self.form, QtCore.SIGNAL("AddItemClicked"), self.addItem)
         self.connect(self.form, QtCore.SIGNAL("EditItemClicked"), self.editItem)
-        
-    def getItems(self):
+        self.fillItemsTable()
+
+    def fillItemsTable(self):
         self.ItemTable.setRowCount(0)
-        rows=self.DbConnector.getItems()
+        rows=self.getItems()
         counter=0
         for row in rows:
             Item0=QtGui.QTableWidgetItem(str(row[0]))
@@ -33,18 +34,21 @@ class ObjHandler(QObject):
             self.ItemTable.setItem(counter,1,Item1)
             self.ItemTable.setItem(counter,2,Item2)
             counter+=1
+
+    def getItems(self):
+        try:
+            conn=self.DbConnector.getConnection()
+            cur=conn.cursor()
+        except:
+            print ('DataBase is NOT connected')
+            self.errWindow.setMessageText(u"Ошибка подключения к базе данных")
+            self.errWindow.window.show()
+            return
             
-    def refreshIcon(self, row):
-        Items=self.ItemTable.selectedItems()
-        idItem=int(Items[0].text())
-        conn=self.DbConnector.getConnection()
-        cur=conn.cursor()
-        cur.execute('SELECT ItemIcon from Items where idItem={}'.format(idItem))
-        result=cur.fetchone()[0]
-        picBytes = base64.b64decode(result)
-        qpixmap=QtGui.QPixmap()
-        qpixmap.loadFromData(picBytes)
-        self.form.window.ibl_ItemIcon.setPixmap(qpixmap)
+        cur.execute('SELECT idItem, itemName, ItemPrice from Items')
+        result = cur.fetchall()
+        conn.close()
+        return result
 
     def addItem(self):
         count=self.ItemTable.rowCount()+1
@@ -56,9 +60,9 @@ class ObjHandler(QObject):
         param["itemIcon"]=QtGui.QPixmap() 
         param["DbConnector"]=self.DbConnector        
         self.editWindow=EditItem.EditItemHandler(param, 'Add')
-        self.connect(self.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.getItems)
+        self.connect(self.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.fillItemsTable)
         self.editWindow.window.show()
-        
+            
     def editItem(self):
         Items=self.ItemTable.selectedItems()
         if len(Items)==0:
@@ -73,5 +77,24 @@ class ObjHandler(QObject):
         param["itemIcon"]=self.form.window.ibl_ItemIcon.pixmap()
         param["DbConnector"]=self.DbConnector
         self.editWindow=EditItem.EditItemHandler(param, 'Edit')
-        self.connect(self.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.getItems)
-        self.editWindow.window.show()  
+        self.connect(self.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.fillItemsTable)
+        self.editWindow.window.show() 
+        self.fillItemsTable()
+                    
+    def refreshIcon(self, row):
+        Items=self.ItemTable.selectedItems()
+        idItem=int(Items[0].text())
+        conn=self.DbConnector.getConnection()
+        cur=conn.cursor()
+        cur.execute('SELECT ItemIcon from Items where idItem={}'.format(idItem))
+        result=cur.fetchone()[0]
+        picBytes = base64.b64decode(result)
+        qpixmap=QtGui.QPixmap()
+        qpixmap.loadFromData(picBytes)
+        self.form.window.ibl_ItemIcon.setPixmap(qpixmap)
+
+
+        
+ 
+        
+        

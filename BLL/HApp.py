@@ -15,7 +15,7 @@ class HApp():
         self.form=MainWindow()
         self.form.window.show()
         self.ObjHandler=ObjHandler(self.form)
-        self.ObjHandler.getItems()
+        
         
 class MainWindow(QObject):
 
