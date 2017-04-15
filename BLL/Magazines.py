@@ -7,12 +7,4 @@ class MagazinesController(object):
         Constructor
         '''
 
-class MagazinesModel(object):
-        
-    def __init__(self):
-        pass
-    
-class MagazinesView(object):
-    
-    def __init__(self):
-        pass        
+      
