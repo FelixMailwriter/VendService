@@ -15,7 +15,7 @@ class EditItemHandler(QObject):
         self.typeOperation=typeOperation
         self.itemId=param["itemId"]
         self.itemName=param["itemName"]
-        if param["itemPrice"]==0:
+        if param["itemPrice"]=="0":
             self.itemPrice=0
         else:
             self.itemPrice=param["itemPrice"]
@@ -35,13 +35,14 @@ class EditItemHandler(QObject):
         self.connect(self.window.btn_Close, QtCore.SIGNAL("clicked()"), self.window.close) 
 
         
-    def addItem(self, itemIcon, **params):
+    def addItem(self, itemIcon):
         
         try:
             conn=self.DbConnector.getConnection()
             cur=conn.cursor()
             picbyte=base64.b64encode(itemIcon)
-            query='''Insert into vending.Items (ItemName, ItemPrice, ItemIcon) values ('%s', %d, '%s')''' %(self.itemName, self.itemPrice, picbyte)
+            query='''Insert into vending.Items (ItemName, ItemPrice, ItemIcon) values ('%s', %d, '%s')''' %\
+                    (self.itemName, self.itemPrice, picbyte)
             cur.execute(query)
             
             if cur.lastrowid:
@@ -68,7 +69,8 @@ class EditItemHandler(QObject):
             conn=self.DbConnector.getConnection()
             cur=conn.cursor()
             picbyte=base64.b64encode(icon)
-            query='''Update vending.Items SET ItemName='%s', ItemPrice=%d, ItemIcon='%s' WHERE idItem=%d''' %(self.itemName, self.itemPrice, self.picbyte, self.itemId)
+            query='''Update vending.Items SET ItemName='%s', ItemPrice=%d, ItemIcon='%s' WHERE idItem=%d''' %\
+                    (self.itemName, self.itemPrice, picbyte, self.itemId)
             cur.execute(query)
        
             conn.commit()
@@ -101,7 +103,6 @@ class EditItemHandler(QObject):
         
     def save(self):
         self.checkPrice
-        #self.window.btn_Save.setEnabled(True)
         self.itemName=self.window.le_ItemName.text()
         if self.itemName=="" or self.itemPrice==0 or self.itemIcon is None:
             message=QMessageBox()
@@ -115,9 +116,9 @@ class EditItemHandler(QObject):
         
         self.itemIcon.save(buff, "JPG")
         if self.typeOperation=='Add':
-            self.addItem(self.itemIcon)
+            self.addItem(blobImg)
         elif self.typeOperation=='Edit':
-            self.editItem() 
+            self.editItem(blobImg) 
         self.window.close()
         self.emit(QtCore.SIGNAL("RefreshItemTable"))
         

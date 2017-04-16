@@ -56,7 +56,7 @@ class ObjHandler(QObject):
         param={}
         param["itemId"]=0
         param["itemName"]=""
-        param["itemPrice"]=""
+        param["itemPrice"]="0"
         param["itemIcon"]=QtGui.QPixmap() 
         param["DbConnector"]=self.DbConnector        
         self.editWindow=EditItem.EditItemHandler(param, 'Add')
