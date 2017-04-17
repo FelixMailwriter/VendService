@@ -3,6 +3,7 @@ encoding//BLL/EditItem.py=utf-8
 encoding//BLL/HApp.py=utf-8
 encoding//BLL/Magazines.py=utf-8
 encoding//BLL/Objects.py=utf-8
+encoding//BLL/Report.py=utf-8
 encoding//DAL/DBConnector.py=utf-8
 encoding/Errors.py=utf-8
 encoding/main.py=utf-8

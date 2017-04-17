@@ -16,10 +16,10 @@ class ObjHandler(QObject):
         self.ItemTable=self.form.window.ItemTable
         self.ItemTable.cellClicked.connect(self.refreshIcon)
         self.errWindow=Errors.Errors("")
-        self.connect(self.form, QtCore.SIGNAL("AddItemClicked"), self.addItem)
-        self.connect(self.form, QtCore.SIGNAL("EditItemClicked"), self.editItem)
+        self.form.window.btn_AddItem.clicked.connect(self.addItem)
+        self.form.window.btn_EditItem.clicked.connect(self.editItem)
         self.fillItemsTable()
-
+        
     def fillItemsTable(self):
         self.ItemTable.setRowCount(0)
         rows=self.getItems()
