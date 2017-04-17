@@ -8,6 +8,7 @@ class MagazinesController(QObject):
         QObject.__init__(self)
         self.form=form
         self.setUpTable()
+        self.fillItemList()
         
         
     def setUpTable(self):
@@ -17,4 +18,5 @@ class MagazinesController(QObject):
        table.horizontalHeader().setResizeMode(2,QHeaderView.Stretch)
        table.horizontalHeader().setResizeMode(3,QHeaderView.Stretch) 
 
-      
+    def fillItemList(self):
+          pass

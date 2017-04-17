@@ -42,7 +42,7 @@ class EditItemHandler(QObject):
             cur=conn.cursor()
             picbyte=base64.b64encode(itemIcon)
             query='''Insert into vending.Items (ItemName, ItemPrice, ItemIcon) values ('%s', %d, '%s')''' %\
-                    (self.itemName, self.itemPrice, picbyte)
+                    (self.itemName, self.itemPrice*100, picbyte)
             cur.execute(query)
             
             if cur.lastrowid:
@@ -70,7 +70,7 @@ class EditItemHandler(QObject):
             cur=conn.cursor()
             picbyte=base64.b64encode(icon)
             query='''Update vending.Items SET ItemName='%s', ItemPrice=%d, ItemIcon='%s' WHERE idItem=%d''' %\
-                    (self.itemName, self.itemPrice, picbyte, self.itemId)
+                    (self.itemName, self.itemPrice*100, picbyte, self.itemId)
             cur.execute(query)
        
             conn.commit()
