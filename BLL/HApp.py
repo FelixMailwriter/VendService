@@ -1,9 +1,8 @@
 # -*- coding:utf-8 -*-
 
 import os
-from PyQt4 import QtCore, uic
-from PyQt4.Qt import QObject, QFont, QHeaderView, QComboBox, QStringList
-from PyQt4 import QtGui
+from PyQt4 import QtCore, uic, QtGui #QtWidgets
+from PyQt4.Qt import QObject, QFont, QHeaderView, QComboBox, QStringList, QAbstractItemView, QItemDelegate
 from BLL.ItemsController import ItemsController
 from Magazines import MagazinesController
 from Report import ReportController
@@ -69,7 +68,6 @@ class MainWindow(QObject):
             ItemPrice=QtGui.QTableWidgetItem(str(row[2]/100.0))
             ItemPrice.setTextAlignment(QtCore.Qt.AlignCenter)
             
-
             self.ItemTable.insertRow(counter)
             self.ItemTable.setItem(counter,0,ItemIdItem)
             self.ItemTable.setItem(counter,1,ItemName)
@@ -83,6 +81,7 @@ class MainWindow(QObject):
         self.window.ibl_ItemIcon.setPixmap(qpixmap) 
         
     def fillMagazinsTable(self, rows):
+        self.MagazinsTable.setItemDelegateForColumn(3, NonEditColumnDelegate())
         self.MagazinsTable.setRowCount(0)
         counter=0
         for row in rows:
@@ -91,7 +90,7 @@ class MainWindow(QObject):
             
             cmbx=QComboBox()
             cmbx.addItems(self.ItemsList)
-            name=str(row[2])
+            name=str(row[1])
             index=cmbx.findText(name)
             cmbx.setCurrentIndex(index)
             #ItemName=QtGui.QTableWidgetItem(str(row[1]))
@@ -100,13 +99,19 @@ class MainWindow(QObject):
             ItemItemQty.setTextAlignment(QtCore.Qt.AlignCenter)
             ItemIdItem=QtGui.QTableWidgetItem(str(row[3]))
             ItemIdItem.setTextAlignment(QtCore.Qt.AlignCenter)
+            #ItemIdItem.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
             self.MagazinsTable.insertRow(counter)
             self.MagazinsTable.setItem(counter,0,ItemIdMag)
-            self.MagazinsTable.setItem(counter,1,cmbx)
+            #self.MagazinsTable.setItem(counter,1,cmbx)
+            self.MagazinsTable.setCellWidget(counter,1,cmbx)
             self.MagazinsTable.setItem(counter,2,ItemItemQty)
             self.MagazinsTable.setItem(counter,3,ItemIdItem)
             counter+=1            
 
-                          
+class NonEditColumnDelegate(QItemDelegate):
+    def createEditor(self, parent, options, index):
+        return None
+        
+                                  
                   
