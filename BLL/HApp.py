@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 
 import os
-from PyQt4 import QtCore, uic, QtGui #QtWidgets
-from PyQt4.Qt import QObject, QFont, QHeaderView, QComboBox, QStringList, QAbstractItemView, QItemDelegate
+from PyQt4 import QtCore, uic, QtGui 
+from PyQt4.Qt import QObject, QFont, QHeaderView, QComboBox, QStringList, QItemDelegate
 from BLL.ItemsController import ItemsController
 from Magazines import MagazinesController
 from Report import ReportController
@@ -26,18 +26,13 @@ class MainWindow(QObject):
         self.window=uic.loadUi(path)
         self.ItemTable=self.window.ItemTable
         self.MagazinsTable=self.window.tblw_Magazines
+        self.window.btn_AddMag.clicked.connect(self.addMagazin)
+        self.window.btn_DelMag.clicked.connect(self.delMagazin)
         self.ItemsList=QStringList()
         self.setUpTables()
     
     def setItemsList(self, itemsNames):
         self.ItemsList=itemsNames
-        
-        #self.ItemsList.addItems(itemsNames)
-        #self.window.cmbx_Mag.addItems(itemsNames)
-        
-        
-        #i=self.window.cmbx_Mag.findText(u'ff')
-        #self.window.cmbx_Mag.setCurrentIndex(i)
         
     def setUpTables(self):
         rowsFont=QFont('Lucida',12, QtGui.QFont.Bold)
@@ -93,25 +88,31 @@ class MainWindow(QObject):
             name=str(row[1])
             index=cmbx.findText(name)
             cmbx.setCurrentIndex(index)
-            #ItemName=QtGui.QTableWidgetItem(str(row[1]))
-            #ItemName.setTextAlignment(QtCore.Qt.AlignCenter)
             ItemItemQty=QtGui.QTableWidgetItem(str(row[2]))
             ItemItemQty.setTextAlignment(QtCore.Qt.AlignCenter)
             ItemIdItem=QtGui.QTableWidgetItem(str(row[3]))
             ItemIdItem.setTextAlignment(QtCore.Qt.AlignCenter)
-            #ItemIdItem.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
             self.MagazinsTable.insertRow(counter)
             self.MagazinsTable.setItem(counter,0,ItemIdMag)
-            #self.MagazinsTable.setItem(counter,1,cmbx)
             self.MagazinsTable.setCellWidget(counter,1,cmbx)
             self.MagazinsTable.setItem(counter,2,ItemItemQty)
             self.MagazinsTable.setItem(counter,3,ItemIdItem)
             counter+=1            
 
+    def addMagazin(self):
+        rowCount=self.MagazinsTable.rowCount()
+        self.MagazinsTable.insertRow(rowCount)
+        cmbx=QComboBox()
+        cmbx.addItems(self.ItemsList)
+        cmbx.setCurrentIndex(-1)        
+        self.MagazinsTable.setCellWidget(rowCount,1,cmbx)
+        
+    def delMagazin(self):
+        currentRow=self.MagazinsTable.currentRow()
+        self.MagazinsTable.removeRow(currentRow)
+       
+
 class NonEditColumnDelegate(QItemDelegate):
     def createEditor(self, parent, options, index):
         return None
-        
-                                  
-                  
