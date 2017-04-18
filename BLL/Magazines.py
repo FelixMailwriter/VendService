@@ -1,22 +1,35 @@
 # -*- coding:utf-8 -*-
 
-from PyQt4.Qt import QObject, QFont, QHeaderView
+from PyQt4.Qt import QObject
+from DAL.DBConnector import DbConnector
+from Errors import Errors
 
 class MagazinesController(QObject):
 
     def __init__(self, form):
         QObject.__init__(self)
+        self.DbConnector=DbConnector()
         self.form=form
-        self.setUpTable()
+        self.MagazinsTable=self.form.window.tblw_Magazines
         self.fillItemList()
-        
-        
-    def setUpTable(self):
-       table=self.form.window.tblw_Magazines
-       table.horizontalHeader().setResizeMode(0,QHeaderView.ResizeToContents)
-       table.horizontalHeader().setResizeMode(1,QHeaderView.Stretch)
-       table.horizontalHeader().setResizeMode(2,QHeaderView.Stretch)
-       table.horizontalHeader().setResizeMode(3,QHeaderView.Stretch) 
 
     def fillItemList(self):
-          pass
+        try:
+            conn=self.DbConnector.getConnection()
+            cur=conn.cursor()
+            cur.execute('select idMagazins, itemName, ItemQty, Items.idItem from Magazins, Items where Magazins.ItemId=Items.idItem')
+            result = cur.fetchall()
+            
+        except:
+            print ('DataBase is NOT connected')
+            self.errWindow=Errors(u"Ошибка подключения к базе данных")
+            self.errWindow.window.show()
+  
+        finally:
+            cur.close()
+            conn.close()
+            
+        self.form.fillMagazinsTable(result)
+        
+        
+        

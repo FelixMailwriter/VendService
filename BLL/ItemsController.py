@@ -2,10 +2,10 @@
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.Qt import QObject, QMessageBox 
-from DAL.DBConnector import DbConnector
 import base64
+from DAL.DBConnector import DbConnector
 import EditItem
-import Errors
+from Errors import Errors
 
 class ItemsController(QObject):
     
@@ -13,24 +13,21 @@ class ItemsController(QObject):
         QObject.__init__(self)
         self.DbConnector=DbConnector()
         self.form=form
-        self.errWindow=Errors.Errors("")
         self.editWindow=None
         self.form.window.btn_AddItem.clicked.connect(self.addItem)
         self.form.window.btn_EditItem.clicked.connect(self.editItem)
-        self.form.window.ItemTable.cellClicked.connect(self.refreshIcon)
-         
-               
+        self.form.window.ItemTable.cellClicked.connect(self.refreshIcon)   
         self.getItems()
         
     def getItems(self):
         try:
             conn=self.DbConnector.getConnection()
             cur=conn.cursor()
+            
         except:
             print ('DataBase is NOT connected')
-            self.errWindow.setMessageText(u"Ошибка подключения к базе данных")
+            self.errWindow=Errors(u"Ошибка подключения к базе данных")
             self.errWindow.window.show()
-            return
             
         cur.execute('SELECT idItem, itemName, ItemPrice from Items')
         result = cur.fetchall()

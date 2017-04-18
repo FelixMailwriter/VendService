@@ -4,7 +4,7 @@ import os
 from PyQt4.Qt import QObject, QFileDialog, QMessageBox, QByteArray, QBuffer
 from PyQt4 import QtCore, QtGui, uic
 import base64
-import Errors
+from Errors import Errors
 
 class EditItemHandler(QObject):
     
@@ -49,19 +49,17 @@ class EditItemHandler(QObject):
                 message=QMessageBox()
                 message.setText(u"Данные добавлены")
                 message.exec_()
-            else:
-                message=QMessageBox()
-                message.setText(u"Ошибка добавления данных")
-                message.exec_()
-        
-            conn.commit()
+                conn.commit()
             
-        except Errors as error:
-            print (error)
+        except:
+            print ('DataBase is NOT connected')
+            self.errWindow=Errors(u"Ошибка подключения к базе данных")
+            self.errWindow.window.show()
         
         finally:
             cur.close()
             conn.close()
+ 
                     
     def editItem (self, icon):
 
@@ -75,8 +73,10 @@ class EditItemHandler(QObject):
        
             conn.commit()
             
-        except Errors as error:
-            print (error)
+        except:
+            print ('DataBase is NOT connected')
+            self.errWindow=Errors(u"Ошибка подключения к базе данных")
+            self.errWindow.window.show()
             
         finally:
             cur.close()
