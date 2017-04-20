@@ -12,50 +12,51 @@ class MagazinesController(QObject):
         self.form=form
         self.MagazinsTable=self.form.window.tblw_Magazines
         self.getItemsList()
-        self.fillItemList()
         
     def getItemsList(self):
-        try:
-            conn=self.DbConnector.getConnection()
-            cur=conn.cursor()
-            cur.execute('select ItemName from Items order by ItemName')
-            result = cur.fetchall()
-            
-        except:
-            print ('DataBase is NOT connected')
-            self.errWindow=Errors(u"Ошибка подключения к базе данных")
-            self.errWindow.window.show()
-  
-        finally:
-            cur.close()
-            conn.close()
+        query='select ItemName from Items order by ItemName'
+        result=self._getDataFromDB(query)
             
         listItems=QStringList()
+        if result is None: return listItems
+        
         for element in result:
             listItems.append(element[0]) 
                         
-        self.form.setItemsList(listItems)     
-           
+        return listItems    
 
-    def fillItemList(self):
+    def getMagazinsItemsMap(self):
+        query= ('select idMagazins, itemName, ItemQty, Items.idItem from Magazins,'+
+        ' Items where Magazins.ItemId=Items.idItem')
+        result=self._getDataFromDB(query)
+        return result
+    
+    def _getDataFromDB(self, query):
         try:
             conn=self.DbConnector.getConnection()
             cur=conn.cursor()
-            cur.execute('select idMagazins, itemName, ItemQty, Items.idItem from Magazins,'+ 
-            'Items where Magazins.ItemId=Items.idItem')
+            cur.execute(query)
             result = cur.fetchall()
             
         except:
-            print ('DataBase is NOT connected')
             self.errWindow=Errors(u"Ошибка подключения к базе данных")
             self.errWindow.window.show()
-  
+            return None
         finally:
             cur.close()
             conn.close()
-               
-        self.form.fillMagazinsTable(result)
         
+        return result        
+               
     def saveMagazinsMapping(self, magazinesMap):
-        pass   
+        pass  
+    
+    def _updateMagazine(self, param):
+        pass
+    
+    def _insertMagazine(self, param):
+        pass
+    
+    def dropMagazinesTable(self):
+        pass 
         

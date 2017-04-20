@@ -33,55 +33,38 @@ class EditItemHandler(QObject):
         self.window.btn_Save.clicked.connect(self.save)
         self.connect(self.window.le_ItemPrice, QtCore.SIGNAL("editingFinished()"),self.checkPrice)
         self.connect(self.window.btn_Close, QtCore.SIGNAL("clicked()"), self.window.close) 
-
-        
-    def addItem(self, itemIcon):
-        
-        try:
-            conn=self.DbConnector.getConnection()
-            cur=conn.cursor()
-            picbyte=base64.b64encode(itemIcon)
-            query='''Insert into vending.Items (ItemName, ItemPrice, ItemIcon) values ('%s', %d, '%s')''' %\
-                    (self.itemName, self.itemPrice*100, picbyte)
-            cur.execute(query)
-            
-            if cur.lastrowid:
-                message=QMessageBox()
-                message.setText(u"Данные добавлены")
-                message.exec_()
-                conn.commit()
-            
-        except:
-            print ('DataBase is NOT connected')
-            self.errWindow=Errors(u"Ошибка подключения к базе данных")
-            self.errWindow.window.show()
-        
-        finally:
-            cur.close()
-            conn.close()
- 
-                    
-    def editItem (self, icon):
-
-        try:
-            conn=self.DbConnector.getConnection()
-            cur=conn.cursor()
-            picbyte=base64.b64encode(icon)
-            query='''Update vending.Items SET ItemName='%s', ItemPrice=%d, ItemIcon='%s' WHERE idItem=%d''' %\
-                    (self.itemName, self.itemPrice*100, picbyte, self.itemId)
-            cur.execute(query)
        
+    def addItem(self, itemIcon):
+        picbyte=base64.b64encode(itemIcon)
+        query='''Insert into vending.Items (ItemName, ItemPrice, ItemIcon) values ('%s', %d, '%s')''' %\
+                    (self.itemName, self.itemPrice*100, picbyte)
+        result=self._writeToDB(query)    
+        if result.lastrowid:
+            message=QMessageBox()
+            message.setText(u"Данные добавлены")
+            message.exec_()
+                    
+    def editItem (self, itemIcon):
+        picbyte=base64.b64encode(itemIcon)
+        query='''Update vending.Items SET ItemName='%s', ItemPrice=%d, ItemIcon='%s' WHERE idItem=%d''' %\
+                    (self.itemName, self.itemPrice*100, picbyte, self.itemId)
+        self._writeToDB(query)
+        
+    def _writeToDB(self, query):
+        try:
+            conn=self.DbConnector.getConnection()
+            cur=conn.cursor()
+            cur.execute(query)
             conn.commit()
-            
         except:
-            print ('DataBase is NOT connected')
-            self.errWindow=Errors(u"Ошибка подключения к базе данных")
-            self.errWindow.window.show()
-            
+            self.errWindow=Errors(u"Ошибка записи в базу данных")
+            self.errWindow.window.show()      
         finally:
             cur.close()
             conn.close()
-        
+            
+        return cur 
+     
     def loadIcon(self):
         file, fd=QFileDialog.getOpenFileNameAndFilter(parent=self.window, filter="Images *.jpg (*.jpg)")
         self.window.le_ItemImgPath.setText(file)
@@ -99,8 +82,7 @@ class EditItemHandler(QObject):
             message.setText(u"В поле Цена не числовое значение")
             message.exec_()
         self.window.btn_Save.setEnabled(flag)
-        
-        
+             
     def save(self):
         self.checkPrice
         self.itemName=self.window.le_ItemName.text()
