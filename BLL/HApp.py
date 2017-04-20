@@ -28,8 +28,25 @@ class MainWindow(QObject):
         self.MagazinsTable=self.window.tblw_Magazines
         self.window.btn_AddMag.clicked.connect(self.addMagazin)
         self.window.btn_DelMag.clicked.connect(self.delMagazin)
+        self.window.btn_MagSave.clicked.connect(self.saveMagazins)
         self.ItemsList=QStringList()
         self.setUpTables()
+    
+    def saveMagazins(self):
+        MagazinsMappingList=[]
+        for i in range (0, self.MagazinsTable.rowCount()):
+            row=[]
+            for j in range (0, self.MagazinsTable.columnCount()):
+                wgt=self.MagazinsTable.cellWidget(i,j)
+                itemType=type(wgt)
+                print str(itemType)
+                if str(itemType)=='<class \'PyQt4.QtGui.QComboBox\'>':
+                    value=wgt.currentText()
+                elif str(itemType)=='<type \'NoneType\'>': 
+                    value=self.MagazinsTable.item(i,j).text()
+                row.append(value)
+            MagazinsMappingList.append(row)
+        self.MagazinesController.saveMagazinsMapping(MagazinsMappingList)
     
     def setItemsList(self, itemsNames):
         self.ItemsList=itemsNames

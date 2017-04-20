@@ -56,5 +56,6 @@ class MagazinesController(QObject):
                
         self.form.fillMagazinsTable(result)
         
-        
+    def saveMagazinsMapping(self, magazinesMap):
+        pass   
         
