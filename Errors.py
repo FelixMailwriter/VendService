@@ -10,6 +10,7 @@ class Errors(QObject):
         QObject.__init__(self)
         path=os.path.abspath("UI/UIForms/errorWindow.ui")
         self.window=uic.loadUi(path)
+        self.window.btn_close.clicked.connect(self.window.close)
         self.window.label.setText(messageText)
         
     def setMessageText(self, messageText):

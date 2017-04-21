@@ -2,11 +2,12 @@
 
 import os
 from PyQt4 import QtCore, uic, QtGui 
-from PyQt4.Qt import QObject, QFont, QHeaderView, QComboBox, QStringList, QItemDelegate,\
+from PyQt4.Qt import QObject, QFont, QHeaderView, QComboBox, QItemDelegate,\
     QMessageBox
 from BLL.ItemsController import ItemsController
 from Magazines import MagazinesController
 from Report import ReportController
+from Errors import Errors
 
 
 class HApp(QObject):
@@ -166,32 +167,38 @@ class MainWindow(QObject):
                 row.append(value)
             MagazinsMappingList.append(row)
             
-        if self._hasDublicatesMagazins(MagazinsMappingList): 
+        if self._checkCorrectMagazinNumber(MagazinsMappingList): 
             return
         
         else: 
             self.MagazinesController.saveMagazinsMapping(MagazinsMappingList)
 
-
-    def _hasDublicatesMagazins(self, MagazinsMappingList):
+    
+    def _checkCorrectMagazinNumber(self, MagazinsMappingList):
         for i in range (0, len(MagazinsMappingList)-1):
             magazine=MagazinsMappingList[i]
             for j in range (i+1, len(MagazinsMappingList)):
                 if magazine[0]==MagazinsMappingList[j][0]:
-                    message=QMessageBox()
-                    message.setWindowTitle(u'Ошибка')
-                    message.setText(u'Дублируются номера магазинов')
-                    message.exec_()
+                    self.message=Errors(u'Дублируются номера магазинов')
+                    self.message.window.setWindowTitle(u'Ошибка')
+                    self.message.window.show()
                     return True
                 elif MagazinsMappingList[j][0]==0:
-                    message=QMessageBox()
-                    message.setWindowTitle(u'Ошибка')
-                    message.setText(u'Не указан номер магазина')
-                    message.exec_()
-                    return True                        
+                    self.message=Errors(u'Не указан номер магазина')
+                    self.message.window.setWindowTitle(u'Ошибка')
+                    self.message.window.show()
+                    return True
+                try:
+                    num= (int)(MagazinsMappingList[j][0])
+                except:
+                    self.message=Errors(u'В поле номера магазина не числовое значение')
+                    self.message.window.setWindowTitle(u'Ошибка')
+                    self.message.window.show()                    
+                    return True
+                                           
         return False    
            
-
+    #def _showErrorMessage
 
        
 
