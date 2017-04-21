@@ -17,18 +17,8 @@ class ItemsController(QObject):
 
         
     def getItems(self):
-        try:
-            conn=self.DbConnector.getConnection()
-            cur=conn.cursor()
-            
-        except:
-            print ('DataBase is NOT connected')
-            self.errWindow=Errors(u"Ошибка подключения к базе данных")
-            self.errWindow.window.show()
-            
-        cur.execute('SELECT idItem, itemName, ItemPrice from Items')
-        result = cur.fetchall()
-        conn.close()
+        query='SELECT idItem, itemName, ItemPrice from Items'
+        result = self.DbConnector.getDataFromDb(query)
         return result
 
     def addItem(self):
@@ -44,9 +34,9 @@ class ItemsController(QObject):
             
     def editItem(self, selectedRow):
         if len(selectedRow)==0:
-            message=QMessageBox()
-            message.setText(u"Объект не выбран")
-            message.exec_()
+            self.message=Errors(u"Объект не выбран")
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()
             return
         param={}
         param["itemId"]=int(selectedRow[0].text())
@@ -57,19 +47,47 @@ class ItemsController(QObject):
         self.editWindow=EditItem.EditItemHandler(param, 'Edit')
         self.form.connect(self.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.form.fillItemsTable)
         self.editWindow.window.show() 
-                    
+        
+    def deleteItem(self, selectedRow):
+        if len(selectedRow)==0:
+            self.message=Errors(u"Объект не выбран")
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()
+            return
+        idItem=int(selectedRow[0].text())
+        MagazinesWithItems=self._getMagazinesContainItem(idItem)
+        if len(MagazinesWithItems)!=0:
+            magList=''
+            for magazine in MagazinesWithItems:
+                magList+=str(magazine[0])+', '
+            magList=magList[:-2]
+            msg=u'Удаление невозможно. Предмет загружен в магазин(ы) '+magList
+            self.message=Errors(msg)
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()
+            return
+        query='Delete from Items where idItem=%d' %(idItem)
+        self.DbConnector.deleteDataFromTable(query)
+        self.form.fillItemsTable()
+        
+            
+                               
     def getIconById(self, idItem):
-        conn=self.DbConnector.getConnection()
-        cur=conn.cursor()
-        cur.execute('SELECT ItemIcon from Items where idItem={}'.format(idItem))
-        result=cur.fetchone()[0]
+        query='SELECT ItemIcon from Items where idItem={}'.format(idItem)
+        result=self.DbConnector.getDataFromDb(query)[0][0]
+
         qpixmap=QtGui.QPixmap()
         if result is not None:
             picBytes = base64.b64decode(result)
             qpixmap.loadFromData(picBytes)
         return qpixmap
 
-
+    def _getMagazinesContainItem(self, idItem):
+        query= ('select idMagazins, ItemQty, itemId from Magazins'+
+        ' where Magazins.ItemId=%d') %(idItem)
+        result=self.DbConnector.getDataFromDb(query)
+        return result
+        
 
         
  

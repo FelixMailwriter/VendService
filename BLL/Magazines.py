@@ -15,48 +15,53 @@ class MagazinesController(QObject):
         
     def getItemsList(self):
         query='select ItemName from Items order by ItemName'
-        result=self._getDataFromDB(query)
-            
+        result=self.DbConnector.getDataFromDb(query)    
         listItems=QStringList()
         if result is None: return listItems
-        
         for element in result:
-            listItems.append(element[0]) 
-                        
+            listItems.append(element[0])                 
         return listItems    
 
     def getMagazinsItemsMap(self):
         query= ('select idMagazins, itemName, ItemQty, Items.idItem from Magazins,'+
         ' Items where Magazins.ItemId=Items.idItem')
-        result=self._getDataFromDB(query)
+        result=self.DbConnector.getDataFromDb(query)
         return result
-    
-    def _getDataFromDB(self, query):
-        try:
-            conn=self.DbConnector.getConnection()
-            cur=conn.cursor()
-            cur.execute(query)
-            result = cur.fetchall()
-            
-        except:
-            self.errWindow=Errors(u"Ошибка подключения к базе данных")
-            self.errWindow.window.show()
-            return None
-        finally:
-            cur.close()
-            conn.close()
-        
-        return result        
                
-    def saveMagazinsMapping(self, magazinesMap):
-        pass  
-    
-    def _updateMagazine(self, param):
-        pass
-    
+    def _saveMagazinsMapping(self, magazinesMap):
+        if not self._dropMagazinesTable(): return
+        for magazin in magazinesMap:
+            param={}
+            param["magazineNumber"]=(int)(magazin[0])
+            param["itemName"]=magazin[1]
+            param ["itemQty"]=int(magazin[2])
+            param ["itemId"]=magazin[3]
+
+            self._insertMagazine(param)
+  
     def _insertMagazine(self, param):
-        pass
+        query='Select idItem from Items where ItemName Like \'%s\'' %(param["itemName"])
+        result=self.DbConnector.getDataFromDb(query)
+        if result is not None:
+            itemId=result[0][0]
+            query='Insert into Magazins (idMagazins, ItemId, ItemQTY) values (%d, %d, %d)' %\
+                (param["magazineNumber"], itemId, param["itemQty"])
+            sucsess=self.DbConnector.insertDataToDB(query)
+            if sucsess:
+                self.message=Errors(u"Данные записаны")
+                self.message.window.setWindowTitle(u'Результат операции')
+                self.message.window.show()
+            else:            
+                self.message=Errors(u"Ошибка записи в базу данных")
+                self.message.window.setWindowTitle(u'Результат операции')
+                self.message.window.show()                    
+        else:
+            self.message=Errors(u"Ошибка выборки данных из базы")
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()                                  
     
-    def dropMagazinesTable(self):
-        pass 
+    def _dropMagazinesTable(self):
+        query='Delete from Magazins'
+        return self.DbConnector.deleteDataFromTable(query) 
+     
         

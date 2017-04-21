@@ -24,7 +24,7 @@
           <locale language="Russian" country="RussianFederation"/>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="documentMode">
           <bool>false</bool>
@@ -175,7 +175,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="btn_RemoveItem">
+                <widget class="QPushButton" name="btn_DeleteItem">
                  <property name="font">
                   <font>
                    <pointsize>12</pointsize>

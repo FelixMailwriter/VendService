@@ -35,6 +35,7 @@ class MainWindow(QObject):
         #Прописываем события кнопок для предметов        
         self.window.btn_AddItem.clicked.connect(self.addItem)
         self.window.btn_EditItem.clicked.connect(self.editItem)
+        self.window.btn_DeleteItem.clicked.connect(self.deleteItem)
         self.window.ItemTable.cellClicked.connect(self.refreshIcon)
         
         #Прописываем события кнопок для магазинов
@@ -101,6 +102,10 @@ class MainWindow(QObject):
     def editItem(self):
         selectedRow=self.ItemTable.selectedItems()
         self.ItemsController.editItem(selectedRow)       
+    
+    def deleteItem(self):
+        selectedRow=self.ItemTable.selectedItems()
+        self.ItemsController.deleteItem(selectedRow)
         
     def refreshIcon(self):
         Items=self.ItemTable.selectedItems()
@@ -167,39 +172,53 @@ class MainWindow(QObject):
                 row.append(value)
             MagazinsMappingList.append(row)
             
-        if self._checkCorrectMagazinNumber(MagazinsMappingList): 
+        if self._checkCorrectMagazineTable(MagazinsMappingList): 
             return
         
         else: 
-            self.MagazinesController.saveMagazinsMapping(MagazinsMappingList)
-
-    
-    def _checkCorrectMagazinNumber(self, MagazinsMappingList):
+            self.MagazinesController._saveMagazinsMapping(MagazinsMappingList)
+            
+    def _checkCorrectMagazineTable(self, MagazinsMappingList):
         for i in range (0, len(MagazinsMappingList)-1):
             magazine=MagazinsMappingList[i]
+            #Проверка заполнения номера магазина
+            if magazine[0]==0:
+                self.message=Errors(u'Не указан номер магазина')
+                self.message.window.setWindowTitle(u'Ошибка')
+                self.message.window.show()
+                return True
+            #Проверка числового значения в номере магазина
+            if self._isNotNumber(magazine[0]):
+                self.message=Errors(u'В поле номера магазина не числовое значение')
+                self.message.window.setWindowTitle(u'Ошибка')
+                self.message.window.show()
+            #Проверка заполнения поля Количество
+            if magazine[2]==0:
+                self.message=Errors(u'Не заполнено поле "Количество"')
+                self.message.window.setWindowTitle(u'Ошибка')
+                self.message.window.show()
+                return True
+            #Проверка числового значения в поле Количество
+            if self._isNotNumber(magazine[2]):
+                self.message=Errors(u'В поле "Количество" не числовое значение')
+                self.message.window.setWindowTitle(u'Ошибка')
+                self.message.window.show() 
+                return True                          
+            #Проверка уникальности номера магазина
             for j in range (i+1, len(MagazinsMappingList)):
                 if magazine[0]==MagazinsMappingList[j][0]:
                     self.message=Errors(u'Дублируются номера магазинов')
                     self.message.window.setWindowTitle(u'Ошибка')
                     self.message.window.show()
                     return True
-                elif MagazinsMappingList[j][0]==0:
-                    self.message=Errors(u'Не указан номер магазина')
-                    self.message.window.setWindowTitle(u'Ошибка')
-                    self.message.window.show()
-                    return True
-                try:
-                    num= (int)(MagazinsMappingList[j][0])
-                except:
-                    self.message=Errors(u'В поле номера магазина не числовое значение')
-                    self.message.window.setWindowTitle(u'Ошибка')
-                    self.message.window.show()                    
-                    return True
-                                           
         return False    
            
-    #def _showErrorMessage
-
+    def _isNotNumber(self, value):
+        try:
+            num= (int)(value)
+        except:return True
+        else: return False
+            
        
 
 class NonEditColumnDelegate(QItemDelegate):

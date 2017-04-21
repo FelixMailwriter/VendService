@@ -18,9 +18,7 @@ class DbConnector():
             conn=mysql.connector.connect(**dbconfig)
                 
         except Error as e:
-            print ('DataBase is NOT connected')
-            self.errWindow.setMessageText(u"Ошибка подключения к базе данных")
-            self.errWindow.window.show()
+            self._showError(u'Ошибка', u'Ошибка подключения к базе данных')
             print (e)
             
         return conn
@@ -37,12 +35,56 @@ class DbConnector():
             for item in items:
                 config[item[0]]=item[1]
         else:
-            self.errWindow.setMessageText(u"Ошибка файла конфигурации БД. Отсутствует секция.")
-            self.errWindow.window.show()            
+            self._showError(u'Ошибка', u'Ошибка файла конфигурации БД. Отсутствует секция.')
         return config
     
+    def getDataFromDb(self, query):
+        try:
+            conn=self.getConnection()
+            cur=conn.cursor()
+            cur.execute(query)
+            result = cur.fetchall()            
+            
+        except:
+            self._showError(u'Ошибка', u'Ошибка подключения к базе данных')
+
+        finally:
+            if cur is not None: cur.close()
+            if conn is not None: conn.close()
+        return result
     
-    def getItemIconById(self, id):
-        pass    
+    def insertDataToDB(self, query):
+        try:
+            conn=self.getConnection()
+            cur=conn.cursor()
+            cur.execute(query)
+            conn.commit()
+            return True
+            
+        except:
+            self._showError(u'Ошибка', u'Ошибка подключения к базе данных')
+            return False
+        finally:
+            if cur is not None: cur.close()
+            if conn is not None: conn.close() 
         
+    def deleteDataFromTable(self, query):
+        try:
+            conn=self.getConnection()
+            cur=conn.cursor()
+            cur.execute(query)
+            conn.commit()
+        except:
+            self._showError(u'Ошибка', u'Ошибка подключения к базе данных')
+            return False
+        finally:
+            cur.close()
+            conn.close()
+        return True  
+    
+    def _showError(self, header, message): 
+        self.message=Errors(message)
+        self.message.window.setWindowTitle(header)
+        self.message.window.show()         
+
           
