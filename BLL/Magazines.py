@@ -28,8 +28,12 @@ class MagazinesController(QObject):
         result=self.DbConnector.getDataFromDb(query)
         return result
                
-    def _saveMagazinsMapping(self, magazinesMap):
+    def saveMagazinsMapping(self, magazinesMap):
+        #Записываем в БД приход/расход предметов
+        self.inOutCommingItems(magazinesMap)
+        #Очищаем таблицу предметов
         if not self._dropMagazinesTable(): return
+        #Записываем в таблицу предметов новые значения
         for magazin in magazinesMap:
             param={}
             param["magazineNumber"]=(int)(magazin[0])
@@ -40,8 +44,10 @@ class MagazinesController(QObject):
             self._insertMagazine(param)
   
     def _insertMagazine(self, param):
+        #Получаем Id предмета по его имени
         query='Select idItem from Items where ItemName Like \'%s\'' %(param["itemName"])
         result=self.DbConnector.getDataFromDb(query)
+        #Прописываем предмет в магазине
         if result is not None:
             itemId=result[0][0]
             query='Insert into Magazins (idMagazins, ItemId, ItemQTY) values (%d, %d, %d)' %\
@@ -63,5 +69,11 @@ class MagazinesController(QObject):
     def _dropMagazinesTable(self):
         query='Delete from Magazins'
         return self.DbConnector.deleteDataFromTable(query) 
-     
+    
+    def inOutCommingItems(self, magazinesMap):
+        query='Select * from Magazins'
+        ItemsInMagazines=self.DbConnector.getDataFromDb(query)
+        l=0
+        
+         
         

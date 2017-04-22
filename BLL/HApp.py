@@ -176,7 +176,7 @@ class MainWindow(QObject):
             return
         
         else: 
-            self.MagazinesController._saveMagazinsMapping(MagazinsMappingList)
+            self.MagazinesController.saveMagazinsMapping(MagazinsMappingList)
             
     def _checkCorrectMagazineTable(self, MagazinsMappingList):
         for i in range (0, len(MagazinsMappingList)-1):

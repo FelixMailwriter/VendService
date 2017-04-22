@@ -3,13 +3,13 @@
 import mysql.connector
 from mysql.connector import Error
 from ConfigParser import ConfigParser
-import Errors
+from Errors import Errors
 
 
 class DbConnector():
 
     def __init__(self):
-            self.errWindow=Errors.Errors("")
+        pass
              
     def getConnection(self):
         conn=None
@@ -44,14 +44,14 @@ class DbConnector():
             cur=conn.cursor()
             cur.execute(query)
             result = cur.fetchall()            
-            
+            return result
         except:
             self._showError(u'Ошибка', u'Ошибка подключения к базе данных')
-
+            
         finally:
             if cur is not None: cur.close()
             if conn is not None: conn.close()
-        return result
+        
     
     def insertDataToDB(self, query):
         try:
