@@ -71,9 +71,34 @@ class MagazinesController(QObject):
         return self.DbConnector.deleteDataFromTable(query) 
     
     def inOutCommingItems(self, magazinesMap):
-        query='Select * from Magazins'
-        ItemsInMagazines=self.DbConnector.getDataFromDb(query)
-        l=0
+        query='Select ItemId, sum(ItemQTY) from Magazins group by ItemId'
+        ItemsInOldTable=self.DbConnector.getDataFromDb(query)
+        ItemsInNewTable=self._groupItemsInNewTable(magazinesMap)
+    
+    def _groupItemsInNewTable(self,magazinesMap):
+        Items=[]
+        qty=[]
+        for i in range(0, len(magazinesMap)):
+            itemName=magazinesMap[i][1]
+            itemQty=int(magazinesMap[i][2])
+            if itemName in Items: 
+                continue            
+            if len(magazinesMap)==1:
+                Items.append(magazinesMap[0][1])
+                qty.append(int(magazinesMap[0][2]))
+                break
+
+            for j in range (i+1, len(magazinesMap)):
+                if itemName==magazinesMap[j][1]:
+                    itemQty+=int(magazinesMap[j][2])
+            Items.append(itemName)
+            qty.append(itemQty)
+        result=zip(Items,qty)
+        return result
+            
         
+        
+        
+            
          
         
