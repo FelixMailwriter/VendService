@@ -74,10 +74,12 @@ class MagazinesController(QObject):
     def inOutCommingItems(self, magazinesMap):
         query='Select ItemId, sum(ItemQTY) from Magazins group by ItemId'
         ItemsInOldTable=self.DbConnector.getDataFromDb(query)
-        ItemsInNewTable=self._getItemsNewTable(magazinesMap)
+        ItemsInNewTable=self._groupMagazinesMapTable(magazinesMap)
         ItemMovementTable=self._getItemMovementTable(ItemsInOldTable, ItemsInNewTable)
+        
+        query=
     
-    def _getItemsNewTable(self,magazinesMap):
+    def _groupMagazinesMapTable(self,magazinesMap):
         ItemsId=[]
         qty=[]
         for i in range(0, len(magazinesMap)):
