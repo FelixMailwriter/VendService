@@ -3,6 +3,7 @@
 from PyQt4.Qt import QObject, QStringList
 from DAL.DBConnector import DbConnector
 from Errors import Errors
+from BllEnums import ItemMoveOperationTypes 
 
 class MagazinesController(QObject):
 
@@ -73,30 +74,67 @@ class MagazinesController(QObject):
     def inOutCommingItems(self, magazinesMap):
         query='Select ItemId, sum(ItemQTY) from Magazins group by ItemId'
         ItemsInOldTable=self.DbConnector.getDataFromDb(query)
-        ItemsInNewTable=self._groupItemsInNewTable(magazinesMap)
+        ItemsInNewTable=self._getItemsNewTable(magazinesMap)
+        ItemMovementTable=self._getItemMovementTable(ItemsInOldTable, ItemsInNewTable)
     
-    def _groupItemsInNewTable(self,magazinesMap):
-        Items=[]
+    def _getItemsNewTable(self,magazinesMap):
+        ItemsId=[]
         qty=[]
         for i in range(0, len(magazinesMap)):
-            itemName=magazinesMap[i][1]
+            idItem=magazinesMap[i][3]
             itemQty=int(magazinesMap[i][2])
-            if itemName in Items: 
+            if idItem in ItemsId: 
                 continue            
             if len(magazinesMap)==1:
-                Items.append(magazinesMap[0][1])
+                ItemsId.append(magazinesMap[0][3])
                 qty.append(int(magazinesMap[0][2]))
                 break
 
             for j in range (i+1, len(magazinesMap)):
-                if itemName==magazinesMap[j][1]:
+                if idItem==magazinesMap[j][3]:
                     itemQty+=int(magazinesMap[j][2])
-            Items.append(itemName)
+            ItemsId.append(idItem)
             qty.append(itemQty)
-        result=zip(Items,qty)
+        result=zip(ItemsId,qty)
         return result
             
+    def _getItemMovementTable(self, ItemsInOldTable, ItemsInNewTable):
+        itemsMovementTable=[]
+        for newItem in ItemsInNewTable:
+            newItemId=newItem[0]
+            oldItemQty=0
+            for oldItem in ItemsInOldTable:
+                oldItemId=oldItem[0]
+                if newItemId==oldItemId:
+                    oldItemQty=oldItem[1]
+            qty=newItem[1]-oldItemQty
+            itemMovement=[]
+            if qty>0:
+                itemMovement.append(newItemId)
+                itemMovement.append(ItemMoveOperationTypes.Income)
+                itemMovement.append(qty)
+            elif qty<0:
+                itemMovement.append(newItemId)
+                itemMovement.append(ItemMoveOperationTypes.OutCome)
+                itemMovement.append(-qty)
+            itemsMovementTable.append(itemMovement) 
         
+        for oldItem in ItemsInOldTable:
+            oldItemId=oldItem[0]
+            oldItemQty=oldItem[1]
+            itemExists=False
+            for newItem in ItemsInNewTable:
+                newItemId=newItem[0]
+                if oldItemId==newItemId:
+                    itemExists=True
+                    break
+            if not itemExists:
+                itemMovement=[]
+                itemMovement.append(oldItemId)
+                itemMovement.append(ItemMoveOperationTypes.OutCome)
+                itemMovement.append(oldItemQty) 
+        
+        return itemsMovementTable                  
         
         
             

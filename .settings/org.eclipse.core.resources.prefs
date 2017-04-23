@@ -1,5 +1,5 @@
 eclipse.preferences.version=1
-encoding//BLL/Common/Enums.py=utf-8
+encoding//BLL/BllEnums.py=utf-8
 encoding//BLL/EditItem.py=utf-8
 encoding//BLL/HApp.py=utf-8
 encoding//BLL/ItemsController.py=utf-8
