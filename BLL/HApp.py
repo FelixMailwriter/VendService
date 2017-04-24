@@ -25,7 +25,8 @@ class MainWindow(QObject):
         
         self.window=uic.loadUi(path)
         self.ItemTable=self.window.ItemTable
-        self.MagazinsTable=self.window.tblw_Magazines 
+        self.MagazinsTable=self.window.tblw_Magazines
+         
               
         # Создаем контроллеры
         self.ItemsController=ItemsController(self)
@@ -33,15 +34,18 @@ class MainWindow(QObject):
         self.ReportController=ReportController(self)
 
         #Прописываем события кнопок для предметов        
-        self.window.btn_AddItem.clicked.connect(self.addItem)
-        self.window.btn_EditItem.clicked.connect(self.editItem)
-        self.window.btn_DeleteItem.clicked.connect(self.deleteItem)
-        self.window.ItemTable.cellClicked.connect(self.refreshIcon)
+        self.window.btn_AddItem.clicked.connect(self._addItem)
+        self.window.btn_EditItem.clicked.connect(self._editItem)
+        self.window.btn_DeleteItem.clicked.connect(self._deleteItem)
+        self.window.ItemTable.cellClicked.connect(self._refreshIcon)
         
         #Прописываем события кнопок для магазинов
-        self.window.btn_AddMag.clicked.connect(self.addMagazin)
-        self.window.btn_DelMag.clicked.connect(self.delMagazin)
-        self.window.btn_MagSave.clicked.connect(self.saveMagazins)
+        self.window.btn_AddMag.clicked.connect(self._addMagazin)
+        self.window.btn_DelMag.clicked.connect(self._delMagazin)
+        self.window.btn_MagSave.clicked.connect(self._saveMagazins)
+        self.window.tblw_Magazines.cellClicked.connect(self._magTableCellClicked)
+        self.window.btn_plus.clicked.connect(self._plusQty)
+        self.window.btn_minus.clicked.connect(self._minusQty)
         
         #Подключаемся к событию окончания добавления и редактирования предмета
         #self.connect(self.ItemsController.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.fillItemsTable)
@@ -96,18 +100,18 @@ class MainWindow(QObject):
                 
 #------------------------------------------------------------
 # Items
-    def addItem(self):
+    def _addItem(self):
         self.ItemsController.addItem()
         
-    def editItem(self):
+    def _editItem(self):
         selectedRow=self.ItemTable.selectedItems()
         self.ItemsController.editItem(selectedRow)       
     
-    def deleteItem(self):
+    def _deleteItem(self):
         selectedRow=self.ItemTable.selectedItems()
         self.ItemsController.deleteItem(selectedRow)
         
-    def refreshIcon(self):
+    def _refreshIcon(self):
         Items=self.ItemTable.selectedItems()
         idItem=int(Items[0].text())
         qpixmap=self.ItemsController.getIconById(idItem)
@@ -143,7 +147,7 @@ class MainWindow(QObject):
             self.MagazinsTable.setItem(counter,3,ItemIdItem)
             counter+=1 
             
-    def addMagazin(self):
+    def _addMagazin(self):
         rowCount=self.MagazinsTable.rowCount()
         self.MagazinsTable.insertRow(rowCount)
         cmbx=QComboBox()
@@ -151,11 +155,11 @@ class MainWindow(QObject):
         cmbx.setCurrentIndex(-1)        
         self.MagazinsTable.setCellWidget(rowCount,1,cmbx)
         
-    def delMagazin(self):
+    def _delMagazin(self):
         currentRow=self.MagazinsTable.currentRow()
         self.MagazinsTable.removeRow(currentRow)            
 
-    def saveMagazins(self):
+    def _saveMagazins(self):
         MagazinsMappingList=[]
         for i in range (0, self.MagazinsTable.rowCount()):
             row=[]
@@ -179,7 +183,7 @@ class MainWindow(QObject):
             self.MagazinesController.saveMagazinsMapping(MagazinsMappingList)
             
     def _checkCorrectMagazineTable(self, MagazinsMappingList):
-        for i in range (0, len(MagazinsMappingList)-1):
+        for i in range (0, len(MagazinsMappingList)):
             magazine=MagazinsMappingList[i]
             #Проверка заполнения номера магазина
             if magazine[0]==0:
@@ -192,6 +196,7 @@ class MainWindow(QObject):
                 self.message=Errors(u'В поле номера магазина не числовое значение')
                 self.message.window.setWindowTitle(u'Ошибка')
                 self.message.window.show()
+                return True
             #Проверка заполнения поля Количество
             if magazine[2]==0:
                 self.message=Errors(u'Не заполнено поле "Количество"')
@@ -219,8 +224,44 @@ class MainWindow(QObject):
         except:return True
         else: return False
             
-       
+    def _magTableCellClicked(self, row, column):
+        item=self.MagazinsTable.item(row, 0)
+        if item is None: return
+        magNum=item.text()        
+        self.window.llbl_magNumber.setText(magNum)   
 
+    def _plusQty(self):
+        qty=self._getQtyToChange()
+        row=self.MagazinsTable.currentRow()
+        if row == -1: return
+        oldValue=int(self.MagazinsTable.item(row, 2).text())
+        newValue=oldValue+qty
+        self.MagazinsTable.item(row,2).setText(str(newValue))
+
+    def _minusQty(self):
+        qty=self._getQtyToChange()
+        row=self.MagazinsTable.currentRow()
+        if row == -1: return
+        oldValue=int(self.MagazinsTable.item(row, 2).text())
+        newValue=oldValue-qty
+        if newValue<=0:
+            self.message=Errors(u'Удаляемое количество предметов больше имеющегося')
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()
+            return            
+        self.MagazinsTable.item(row,2).setText(str(newValue))         
+    
+    def _getQtyToChange(self):
+        value=self.window.le_qty.text()
+        try:
+            qty=(int)(value)
+        except:
+            self.message=Errors(u'В поле "Количество" не числовое значение')
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()                         
+        else:
+            return qty
+        
 class NonEditColumnDelegate(QItemDelegate):
     def createEditor(self, parent, options, index):
         return None
