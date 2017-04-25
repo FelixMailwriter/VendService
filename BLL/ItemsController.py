@@ -68,9 +68,7 @@ class ItemsController(QObject):
             return
         query='Delete from Items where idItem=%d' %(idItem)
         self.DbConnector.deleteDataFromTable(query)
-        self.form.fillItemsTable()
-        
-            
+        self.form.fillItemsTable()            
                                
     def getIconById(self, idItem):
         query='SELECT ItemIcon from Items where idItem={}'.format(idItem)

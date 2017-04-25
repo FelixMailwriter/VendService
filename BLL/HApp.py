@@ -207,7 +207,7 @@ class MainWindow(QObject):
                 self.message.window.show()
                 return True
             #Проверка заполнения поля Количество
-            if magazine[2]==0:
+            if magazine[2]=='0':
                 self.message=Errors(u'Не заполнено поле "Количество"')
                 self.message.window.setWindowTitle(u'Ошибка')
                 self.message.window.show()
