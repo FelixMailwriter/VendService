@@ -68,7 +68,7 @@ class MagazinesController(QObject):
         ItemsInOldTable=self.DbConnector.getDataFromDb(query)
         ItemsInNewTable=self._groupMagazinesMapTable(magazinesMap)
         ItemMovementTable=self._getItemMovementTable(ItemsInOldTable, ItemsInNewTable)
-        query='Select max(IdRecharge) from RechargeItems'
+        query='Select max(IdMovement) from ItemsMovements'
         result=self.DbConnector.getDataFromDb(query)[0][0]
         if result is None:
             result=0
@@ -79,11 +79,16 @@ class MagazinesController(QObject):
             OperationType=itemMovement[1]
             itemQty=itemMovement[2]
             if itemQty==0: continue
-            query='Insert into RechargeItems (IdRecharge, idItem, OperationDate, OperationType, qty) '+\
+            query='Insert into ItemsMovements (IdMovement, idItem, OperationDate, OperationType, qty) '+\
                  'VALUES (%d, %d, \'%s\', \'%s\', %d)' %(idRecharge, idItem, date, OperationType, itemQty)
             result=self.DbConnector.insertDataToDB(query)
-        #Печатаем отчет по перезарядке
-        self._printRechargeReport(ItemsInOldTable, ItemsInNewTable)
+        #Печатаем отчеты
+        if len(ItemMovementTable)==0:
+            #печатаем отчет о загрузке магазинов
+            self._printMagazinesLoadReport()
+        else:    
+            #печатаем отчет о перезарядке
+            self._printRechargeReport(ItemsInOldTable, ItemsInNewTable)
         return result
 
     def _groupMagazinesMapTable(self,magazinesMap):
@@ -195,16 +200,18 @@ class MagazinesController(QObject):
             
     def _printRechargeReport(self, ItemsInOldTable, ItemsInNewTable):
         context=[]
-        query='select RI.idRecharge, Items.itemName, RI.OperationDate, RI.OperationType, '+\
-                'RI.qty from RechargeItems as RI, Items '+\
-                'where RI.idRecharge=(select max(IdRecharge) from RechargeItems) '+\
-                'and RI.idItem=Items.idItem '+\
+        query='select IM.IdMovement, Items.itemName, IM.OperationDate, IM.OperationType, '+\
+                'IM.qty from ItemsMovements as IM, Items '+\
+                'where IM.IdMovement=(select max(IdMovement) from ItemsMovements) '+\
+                'and IM.idItem=Items.idItem '+\
                 'order by OperationType'
         itemMovementTable=self.DbConnector.getDataFromDb(query)
-
+        if len(itemMovementTable)==0:
+            return
         context.append(dict(Text=''))
         context.append(dict(Text='Report: %s' %(str(itemMovementTable[0][0]))))
         context.append(dict(Text='Date: %s' %(str(itemMovementTable[0][2]))))
+            
         context.append(dict(Text='--------------------------------------'))
         context.append(dict(Text=''))
         context.append(dict(Text='{:^45}'.format('Begin:')))
@@ -215,8 +222,8 @@ class MagazinesController(QObject):
         context.append(dict(Text=''))
         context.append(dict(Text='--------------------------------------'))
         
-        if len(itemMovementTable)==0:
-            return 
+        #if len(itemMovementTable)==0:
+        #    return 
                         
         context.append(dict(Text='{:^45}'.format('Movements:')))
         for item in itemMovementTable:
@@ -244,5 +251,26 @@ class MagazinesController(QObject):
         for s in context:
             st=s['Text']
             print st                        
-         
+    
+    def _printMagazinesLoadReport(self):
+        query='select M.idMagazins, I.ItemName, M.ItemQTY from Magazins as M, Items as I '+\
+                'where M.ItemId=I.idItem'
+        result=self.DbConnector.getDataFromDb(query)
+        
+        context=[]
+        context.append(dict(Text=''))
+        context.append(dict(Text='{:^45}'.format('Magazines load')))  
+        context.append(dict(Text='{:^45}'.format('Date: %s' %(str(datetime.datetime.now())))))
+        context.append(dict(Text='--------------------------------------'))
+        context.append(dict(Text=''))               
+        for row in result:
+            row='{:<45}{}{:>3}'.format(str(result[0]), str(result[1]), str(result[2]))
+        context.append(dict(Text='')) 
+        context.append(dict(Text='--------------------------------------'))
+
+        #printer=Printer(context)
+        
+        for s in context:
+            st=s['Text']
+            print st              
         
