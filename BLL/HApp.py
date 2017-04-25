@@ -150,10 +150,19 @@ class MainWindow(QObject):
     def _addMagazin(self):
         rowCount=self.MagazinsTable.rowCount()
         self.MagazinsTable.insertRow(rowCount)
+
+        ItemItemQty=QtGui.QTableWidgetItem()
+        ItemItemQty.setTextAlignment(QtCore.Qt.AlignCenter)
+        self.MagazinsTable.setItem(rowCount,0,ItemItemQty)        
+        
         cmbx=QComboBox()
         cmbx.addItems(self.ItemsList)
         cmbx.setCurrentIndex(-1)        
         self.MagazinsTable.setCellWidget(rowCount,1,cmbx)
+        
+        ItemItemQty=QtGui.QTableWidgetItem('0')
+        ItemItemQty.setTextAlignment(QtCore.Qt.AlignCenter)
+        self.MagazinsTable.setItem(rowCount,2,ItemItemQty)
         
     def _delMagazin(self):
         currentRow=self.MagazinsTable.currentRow()
@@ -228,7 +237,8 @@ class MainWindow(QObject):
         item=self.MagazinsTable.item(row, 0)
         if item is None: return
         magNum=item.text()        
-        self.window.llbl_magNumber.setText(magNum)   
+        self.window.llbl_magNumber.setText(magNum) 
+    
 
     def _plusQty(self):
         qty=self._getQtyToChange()
@@ -258,7 +268,8 @@ class MainWindow(QObject):
         except:
             self.message=Errors(u'В поле "Количество" не числовое значение')
             self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show()                         
+            self.message.window.show() 
+            return 0                        
         else:
             return qty
         

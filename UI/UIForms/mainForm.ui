@@ -399,18 +399,6 @@
                    </font>
                   </property>
                  </column>
-                 <column>
-                  <property name="text">
-                   <string>Id</string>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>12</pointsize>
-                    <weight>75</weight>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                 </column>
                 </widget>
                </item>
                <item>

@@ -33,6 +33,8 @@ class MagazinesController(QObject):
         return result
                
     def saveMagazinsMapping(self, magazinesMap):
+        #Дописываем в таблицу предметов их id
+        self._addIdToMagazinesMap(magazinesMap)
         #Записываем в БД приход/расход предметов
         result=self._inOutCommingItems(magazinesMap)
         if not result:
@@ -50,34 +52,13 @@ class MagazinesController(QObject):
             param ["itemId"]=magazin[3]
 
             self._insertMagazine(param)
-  
-    def _insertMagazine(self, param):
-        #Получаем Id предмета по его имени
-        query='Select idItem from Items where ItemName Like \'%s\'' %(param["itemName"])
-        result=self.DbConnector.getDataFromDb(query)
-        #Прописываем предмет в магазине
-        if result is not None:
-            itemId=result[0][0]
-            query='Insert into Magazins (idMagazins, ItemId, ItemQTY) values (%d, %d, %d)' %\
-                (param["magazineNumber"], itemId, param["itemQty"])
-            sucsess=self.DbConnector.insertDataToDB(query)
-            if sucsess:
-                self.message=Errors(u"Данные записаны")
-                self.message.window.setWindowTitle(u'Результат операции')
-                self.message.window.show()
-            else:            
-                self.message=Errors(u"Ошибка записи в базу данных")
-                self.message.window.setWindowTitle(u'Результат операции')
-                self.message.window.show()                    
-        else:
-            self.message=Errors(u"Ошибка выборки данных из базы")
-            self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show()                                  
-    
-    def _dropMagazinesTable(self):
-        query='Delete from Magazins'
-        return self.DbConnector.deleteDataFromTable(query) 
-    
+            
+    def _addIdToMagazinesMap(self, magazinesMap):
+        for row in magazinesMap:
+            itemName=row[1]
+            itemId=self._getItemIdByName(itemName)
+            row.append(itemId)
+            
     def _inOutCommingItems(self, magazinesMap):
         result=True
         query='Select ItemId, sum(ItemQTY) from Magazins group by ItemId'
@@ -98,14 +79,14 @@ class MagazinesController(QObject):
             query='Insert into RechargeItems (IdRecharge, idItem, OperationDate, OperationType, qty) '+\
                  'VALUES (%d, %d, \'%s\', \'%s\', %d)' %(idRecharge, idItem, date, OperationType, itemQty)
             result=self.DbConnector.insertDataToDB(query)
-        return result       
-    
+        return result
+
     def _groupMagazinesMapTable(self,magazinesMap):
         #Функция группирует предметы, указанные в списке магазинов, суммируя их по видам
         ItemsId=[]
         qty=[]
         for i in range(0, len(magazinesMap)):
-            idItem=int(self._getItemById(magazinesMap[i][1])) #int(magazinesMap[i][3])
+            idItem=int(magazinesMap[i][3])
             itemQty=int(magazinesMap[i][2])
             if idItem in ItemsId: 
                 continue            
@@ -120,13 +101,8 @@ class MagazinesController(QObject):
             ItemsId.append(idItem)
             qty.append(itemQty)
         result=zip(ItemsId,qty)
-        return result
-    
-    def _getItemById(self, itemName):
-        query='Select idItem from Items Where ItemName like \'%s\'' %(itemName)
-        result=self.DbConnector.getDataFromDb(query)
-        return result[0][0]
-            
+        return result        
+
     def _getItemMovementTable(self, ItemsInOldTable, ItemsInNewTable):
         #Функция формирует список движений предметов: приход/расход
         itemsMovementTable=[]
@@ -155,24 +131,7 @@ class MagazinesController(QObject):
                 itemMovement.append(self.OPERATION_OUTCOME)
                 itemMovement.append(-qty)
             itemsMovementTable.append(itemMovement)
-        
-        #Перебираем предметы которые есть в новой таблице, заполненной в интерфейсе и которых не было 
-        #в старой (из БД) т.е. магазин ввели в эксплуатацию. Это - приход
-        for newItem in ItemsInNewTable:
-            newItemId=newItem[0]
-            newItemQty=newItem[1]
-            itemExists=False
-            for oldItem in ItemsInOldTable:
-                oldItemId=oldItem[0]
-                if newItemId==oldItemId:
-                    itemExists=True
-                    break
-            if not itemExists:
-                itemMovement=[]
-                itemMovement.append(int(newItemId))
-                itemMovement.append(self.OPERATION_INCOME)
-                itemMovement.append(newItemQty)        
-                    
+               
         #Перебираем предметы которые были в старой (из БД) таблице и выбираем только те, которых нет в 
         #новой таблице, заполненной в интерфейсе, т.е. их полностью выгрузили из магазинов. Это - расход
         for oldItem in ItemsInOldTable:
@@ -190,7 +149,42 @@ class MagazinesController(QObject):
                 itemMovement.append(self.OPERATION_OUTCOME)
                 itemMovement.append(oldItemQty) 
         
-        return itemsMovementTable                  
+        return itemsMovementTable    
+  
+    def _insertMagazine(self, param):
+        #Получаем Id предмета по его имени
+        query='Select idItem from Items where ItemName Like \'%s\'' %(param["itemName"])
+        result=self.DbConnector.getDataFromDb(query)
+        #Прописываем предмет в магазине
+        if result is not None:
+            itemId=result[0][0]
+            query='Insert into Magazins (idMagazins, ItemId, ItemQTY) values (%d, %d, %d)' %\
+                (param["magazineNumber"], itemId, param["itemQty"])
+            sucsess=self.DbConnector.insertDataToDB(query)
+            if sucsess:
+                self.message=Errors(u"Данные записаны")
+                self.message.window.setWindowTitle(u'Результат операции')
+                self.message.window.show()
+            else:            
+                self.message=Errors(u"Ошибка записи в базу данных")
+                self.message.window.setWindowTitle(u'Результат операции')
+                self.message.window.show()                    
+        else:
+            self.message=Errors(u"Ошибка выборки данных из базы")
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()                                  
+    
+    def _dropMagazinesTable(self):
+        query='Delete from Magazins'
+        return self.DbConnector.deleteDataFromTable(query) 
+    
+    
+    def _getItemIdByName(self, itemName):
+        query='Select idItem from Items Where ItemName like \'%s\'' %(itemName)
+        result=self.DbConnector.getDataFromDb(query)
+        return result[0][0]
+            
+                 
         
         
             
