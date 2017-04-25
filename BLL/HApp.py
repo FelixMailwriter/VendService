@@ -7,7 +7,6 @@ from PyQt4.Qt import QObject, QFont, QHeaderView, QComboBox, QItemDelegate,\
 from BLL.ItemsController import ItemsController
 from Magazines import MagazinesController
 from Report import ReportController
-from Printer import PrnDK350
 from Errors import Errors
 
 
@@ -50,10 +49,7 @@ class MainWindow(QObject):
         
         #Подключаемся к событию окончания добавления и редактирования предмета
         #self.connect(self.ItemsController.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.fillItemsTable)
-        
-        #Инициализируем принтер
-        self.printer=PrnDK350()
-        
+       
         self.ItemsList=self.MagazinesController.getItemsList() #Список имеющихся предметов для выпадающего списка
         
         self.setUpTables()

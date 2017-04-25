@@ -9,13 +9,15 @@ class Printer(QtCore.QThread):
         QtCore.QThread.__init__(self)
         self.prn_config=self._getSettings()
         self.devPath=self.prn_config['path']    #Путь к принтеру
-        self.items=items                        #Ссодержимое чека (предметы или строки текста)
+        self.checkHeader=self._getCheckHeader() #Читаем заголовок чека
+        #self.items=items                        #Ссодержимое чека (предметы или строки текста)
         self.prn=None                           #ссылка на порт принтера
         self.command=None                       #команда принтеру
         self.SEQ=0x20                           #Порядковый номер команды
 
     def run(self):
         self.prn=self._getConnection(self.devPath)
+        self._printHeader()
         self.printCheck()
         
     def _getSettings(self):
@@ -32,7 +34,25 @@ class Printer(QtCore.QThread):
             self._showError(u'Ошибка', u'Ошибка файла конфигурации. Отсутствует секция принтера.')
         return prn_config
 
+    def _getCheckHeader(self):
+        filename='config.ini'
+        section='check_header'
+        parser=ConfigParser()
+        parser.read(filename)
+        prn_config={}
+        if parser.has_section(section):
+            items=parser.items(section)
+            for item in items:
+                prn_config[item[0]]=item[1]
+        else:
+            self._showError(u'Ошибка', u'Ошибка файла конфигурации. Отсутствует секция заголовка чека.')
+        return prn_config        
 
+    def _printHeader(self):
+        items= self.checkHeader.items()
+        for item in items:
+            headerStr='{%s}: {%s}'.format(item[0], item[1])
+            self._printText(headerStr)
    
     def _getConnection(self, devPath):
         conn = serial.Serial()
@@ -41,23 +61,23 @@ class Printer(QtCore.QThread):
             raise PrinterHardwareException('Device not found') 
                 
         conn.baudrate = 115200
-        conn.bytesize = serial.EIGHTBITS #number of bits per bytes
-        conn.parity = serial.PARITY_NONE #set parity check: no parity
+        conn.bytesize = serial.EIGHTBITS    #number of bits per bytes
+        conn.parity = serial.PARITY_NONE    #set parity check: no parity
         conn.stopbits = serial.STOPBITS_ONE #number of stop bits
-        conn.timeout = None          #block read
-        conn.xonxoff = False     #disable software flow control
-        conn.rtscts = True     #disable hardware (RTS/CTS) flow control
-        conn.dsrdtr = True       #disable hardware (DSR/DTR) flow control
+        conn.timeout = None                 #block read
+        conn.xonxoff = False                #disable software flow control
+        conn.rtscts = True                  #disable hardware (RTS/CTS) flow control
+        conn.dsrdtr = True                  #disable hardware (DSR/DTR) flow control
         return conn
-
-    def printCheck(self):
+    
+    def printCheck(self, items):
     #Открываем порт
         self.prn.open()
     #Открытие фискального чека
         self._openFiskCheck()
                 
     #Печать продаваемых товаров   
-        for item in self.items:
+        for item in items:
             if item['Price']==None:                                         #Если печатать свободный текст предмета
                 self._printText(item['Text'])
             else:
@@ -71,7 +91,8 @@ class Printer(QtCore.QThread):
         
     #Закрываем порт
         self.prn.close()
-        
+    
+                
     def _openFiskCheck(self):
 
         #Открываем фискальный чек

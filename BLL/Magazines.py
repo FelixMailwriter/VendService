@@ -4,6 +4,7 @@ from PyQt4.Qt import QObject, QStringList
 from DAL.DBConnector import DbConnector
 import datetime
 from Errors import Errors
+from Printer.PrnDK350 import Printer
  
 
 class MagazinesController(QObject):
@@ -61,7 +62,9 @@ class MagazinesController(QObject):
             
     def _inOutCommingItems(self, magazinesMap):
         result=True
-        query='Select ItemId, sum(ItemQTY) from Magazins group by ItemId'
+        query='Select Magazins.ItemId, sum(Magazins.ItemQTY), Items.ItemName from Magazins, Items ' +\
+                'where Magazins.ItemId=Items.idItem ' +\
+                'group by ItemId'
         ItemsInOldTable=self.DbConnector.getDataFromDb(query)
         ItemsInNewTable=self._groupMagazinesMapTable(magazinesMap)
         ItemMovementTable=self._getItemMovementTable(ItemsInOldTable, ItemsInNewTable)
@@ -79,20 +82,25 @@ class MagazinesController(QObject):
             query='Insert into RechargeItems (IdRecharge, idItem, OperationDate, OperationType, qty) '+\
                  'VALUES (%d, %d, \'%s\', \'%s\', %d)' %(idRecharge, idItem, date, OperationType, itemQty)
             result=self.DbConnector.insertDataToDB(query)
+        #Печатаем отчет по перезарядке
+        self._printRechargeReport(ItemsInOldTable, ItemsInNewTable)
         return result
 
     def _groupMagazinesMapTable(self,magazinesMap):
         #Функция группирует предметы, указанные в списке магазинов, суммируя их по видам
         ItemsId=[]
         qty=[]
+        ItemsName=[]
         for i in range(0, len(magazinesMap)):
             idItem=int(magazinesMap[i][3])
             itemQty=int(magazinesMap[i][2])
+            itemName=str(magazinesMap[i][1])
             if idItem in ItemsId: 
                 continue            
             if len(magazinesMap)==1:
                 ItemsId.append(idItem)
                 qty.append(itemQty)
+                ItemsName.append(itemName)
                 break
 
             for j in range (i+1, len(magazinesMap)):
@@ -100,7 +108,8 @@ class MagazinesController(QObject):
                     itemQty+=int(magazinesMap[j][2])
             ItemsId.append(idItem)
             qty.append(itemQty)
-        result=zip(ItemsId,qty)
+            ItemsName.append(itemName)
+        result=zip(ItemsId,qty,ItemsName)
         return result        
 
     def _getItemMovementTable(self, ItemsInOldTable, ItemsInNewTable):
@@ -184,9 +193,56 @@ class MagazinesController(QObject):
         result=self.DbConnector.getDataFromDb(query)
         return result[0][0]
             
-                 
-        
-        
+    def _printRechargeReport(self, ItemsInOldTable, ItemsInNewTable):
+        context=[]
+        query='select RI.idRecharge, Items.itemName, RI.OperationDate, RI.OperationType, '+\
+                'RI.qty from RechargeItems as RI, Items '+\
+                'where RI.idRecharge=(select max(IdRecharge) from RechargeItems) '+\
+                'and RI.idItem=Items.idItem '+\
+                'order by OperationType'
+        itemMovementTable=self.DbConnector.getDataFromDb(query)
+
+        context.append(dict(Text=''))
+        context.append(dict(Text='Report: %s' %(str(itemMovementTable[0][0]))))
+        context.append(dict(Text='Date: %s' %(str(itemMovementTable[0][2]))))
+        context.append(dict(Text='--------------------------------------'))
+        context.append(dict(Text=''))
+        context.append(dict(Text='{:^45}'.format('Begin:')))
+        for item in ItemsInOldTable:
+            row='{:<45}{:>3}'.format(str(item[2]), str(item[1]))
+            context.append(dict(Text=row))
             
+        context.append(dict(Text=''))
+        context.append(dict(Text='--------------------------------------'))
+        
+        if len(itemMovementTable)==0:
+            return 
+                        
+        context.append(dict(Text='{:^45}'.format('Movements:')))
+        for item in itemMovementTable:
+            if item[3]==self.OPERATION_INCOME:
+                sign='+'
+            else:
+                sign='-'
+            row='{:<44}{}{:>3}'.format(str(item[1]), sign, str(item[4]))
+            context.append(dict(Text=row))
+        
+        context.append(dict(Text=''))
+        context.append(dict(Text='--------------------------------------')) 
+        
+        context.append(dict(Text='{:^45}'.format('Rest:')))      
+        for item in ItemsInNewTable:
+            row='{:<45}{:>3}'.format(str(item[2]), str(item[1]))
+            context.append(dict(Text=row))
+
+        context.append(dict(Text=''))
+        context.append(dict(Text=''))
+        context.append(dict(Text='--------------------------------------'))
+        
+        #printer=Printer(context)
+        
+        for s in context:
+            st=s['Text']
+            print st                        
          
         
