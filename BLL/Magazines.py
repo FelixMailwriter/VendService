@@ -64,7 +64,9 @@ class MagazinesController(QObject):
         result=True
         query='Select Magazins.ItemId, sum(Magazins.ItemQTY), Items.ItemName from Magazins, Items ' +\
                 'where Magazins.ItemId=Items.idItem ' +\
-                'group by ItemId'
+                'group by ItemId '+\
+                'order by Items.itemName'
+
         ItemsInOldTable=self.DbConnector.getDataFromDb(query)
         ItemsInNewTable=self._groupMagazinesMapTable(magazinesMap)
         ItemMovementTable=self._getItemMovementTable(ItemsInOldTable, ItemsInNewTable)
@@ -78,7 +80,6 @@ class MagazinesController(QObject):
             date=datetime.datetime.now()
             OperationType=itemMovement[1]
             itemQty=itemMovement[2]
-            if itemQty==0: continue
             query='Insert into ItemsMovements (IdMovement, idItem, OperationDate, OperationType, qty) '+\
                  'VALUES (%d, %d, \'%s\', \'%s\', %d)' %(idRecharge, idItem, date, OperationType, itemQty)
             result=self.DbConnector.insertDataToDB(query)
@@ -132,10 +133,12 @@ class MagazinesController(QObject):
                     oldItemQty=oldItem[1]
             #Получаем разницу количества предметов по сравнению со старым (из БД) значением 
             qty=newItem[1]-oldItemQty
+            if qty==0:
+                continue
             #Создаем движение
             itemMovement=[]
             #Если новых предметов стало больше, то это - приход
-            if qty>=0:
+            if qty>0:
                 itemMovement.append(int(newItemId))
                 itemMovement.append(self.OPERATION_INCOME)
                 itemMovement.append(qty)
@@ -143,7 +146,7 @@ class MagazinesController(QObject):
             elif qty<0:
                 itemMovement.append(int(newItemId))
                 itemMovement.append(self.OPERATION_OUTCOME)
-                itemMovement.append(-qty)
+                itemMovement.append(qty)
             itemsMovementTable.append(itemMovement)
                
         #Перебираем предметы которые были в старой (из БД) таблице и выбираем только те, которых нет в 
@@ -204,7 +207,7 @@ class MagazinesController(QObject):
                 'IM.qty from ItemsMovements as IM, Items '+\
                 'where IM.IdMovement=(select max(IdMovement) from ItemsMovements) '+\
                 'and IM.idItem=Items.idItem '+\
-                'order by OperationType'
+                'order by Items.itemName'
         itemMovementTable=self.DbConnector.getDataFromDb(query)
         if len(itemMovementTable)==0:
             return
@@ -231,7 +234,7 @@ class MagazinesController(QObject):
                 sign='+'
             else:
                 sign='-'
-            row='{:<44}{}{:>3}'.format(str(item[1]), sign, str(item[4]))
+            row='{:<44}{}{:>3}'.format(str(item[1]), sign, str(abs(item[4])))
             context.append(dict(Text=row))
         
         context.append(dict(Text=''))
@@ -264,7 +267,8 @@ class MagazinesController(QObject):
         context.append(dict(Text='--------------------------------------'))
         context.append(dict(Text=''))               
         for row in result:
-            row='{:<45}{}{:>3}'.format(str(result[0]), str(result[1]), str(result[2]))
+            rowStr='{:<45}{:>3}'.format(str(row[0])+'.'+ str(row[1]), str(row[2]))
+            context.append(dict(Text=rowStr))
         context.append(dict(Text='')) 
         context.append(dict(Text='--------------------------------------'))
 
