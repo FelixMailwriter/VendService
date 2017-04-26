@@ -15,4 +15,6 @@ class Errors(QObject):
         
     def setMessageText(self, messageText):
         self.window.label.setText(messageText)
-        
+    
+    def setWindowTitle(self, title):
+        self.window.setWindowTitle(title)    

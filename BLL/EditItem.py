@@ -5,13 +5,15 @@ from PyQt4.Qt import QObject, QFileDialog, QMessageBox, QByteArray, QBuffer
 from PyQt4 import QtCore, QtGui, uic
 import base64
 from Errors import Errors
+from DAL.DBConnector import DbConnector
 
 class EditItemHandler(QObject):
     
     def __init__(self, param, typeOperation):
         QObject.__init__(self)
         
-        self.DbConnector=param["DbConnector"]
+        #self.DbConnector=param["DbConnector"]
+        self.DbConnector=DbConnector()
         self.typeOperation=typeOperation
         self.itemId=param["itemId"]
         self.itemName=param["itemName"]
@@ -25,46 +27,35 @@ class EditItemHandler(QObject):
         self.window.setWindowFlags(QtCore.Qt.WindowCloseButtonHint)
         self.window.setWindowModality(2)
         self.window.le_ItemName.setText("{}".format(self.itemName))
+        if self.typeOperation=='Edit':
+            self.window.le_ItemName.setEnabled(False) 
         self.window.le_ItemPrice.setText("{}".format(self.itemPrice))
         self.checkPrice()
         self.window.lbl_Icon.setPixmap(self.itemIcon)
         
         self.window.btn_addPath.clicked.connect(self.loadIcon)
-        self.window.btn_Save.clicked.connect(self.save)
+        self.window.btn_Save.clicked.connect(self._save)
         self.connect(self.window.le_ItemPrice, QtCore.SIGNAL("editingFinished()"),self.checkPrice)
         self.connect(self.window.btn_Close, QtCore.SIGNAL("clicked()"), self.window.close) 
        
     def addItem(self, itemIcon):
         picbyte=base64.b64encode(itemIcon)
-        query='''Insert into vending.Items (ItemName, ItemPrice, ItemIcon) values ('%s', %d, '%s')''' %\
-                    (self.itemName, self.itemPrice*100, picbyte)
-        result=self._writeToDB(query)    
-        if result.lastrowid:
+        if self._checkNameExists(self.itemName):
+            return
+        query='''Insert into vending.Items (ItemName, ItemPrice, ItemIcon, hidden) values ('%s', %d, '%s', %d)''' %\
+                    (self.itemName, self.itemPrice*100, picbyte, 0)
+        result=self.DbConnector.insertDataToDB(query)#_writeToDB(query)    
+        if result:
             message=QMessageBox()
             message.setText(u"Данные добавлены")
             message.exec_()
                     
     def editItem (self, itemIcon):
         picbyte=base64.b64encode(itemIcon)
-        query='''Update vending.Items SET ItemName='%s', ItemPrice=%d, ItemIcon='%s' WHERE idItem=%d''' %\
-                    (self.itemName, self.itemPrice*100, picbyte, self.itemId)
-        self._writeToDB(query)
-        
-    def _writeToDB(self, query):
-        try:
-            conn=self.DbConnector.getConnection()
-            cur=conn.cursor()
-            cur.execute(query)
-            conn.commit()
-        except:
-            self.errWindow=Errors(u"Ошибка записи в базу данных")
-            self.errWindow.window.show()      
-        finally:
-            cur.close()
-            conn.close()
-            
-        return cur 
-     
+        query='''Update vending.Items SET ItemName='%s', ItemPrice=%d, ItemIcon='%s', hidden=%d WHERE idItem=%d''' %\
+                    (self.itemName, self.itemPrice*100, picbyte, 0, self.itemId)
+        self.DbConnector.insertDataToDB(query) #self._writeToDB(query)
+
     def loadIcon(self):
         file, fd=QFileDialog.getOpenFileNameAndFilter(parent=self.window, filter="Images *.jpg (*.jpg)")
         self.window.le_ItemImgPath.setText(file)
@@ -83,14 +74,14 @@ class EditItemHandler(QObject):
             message.exec_()
         self.window.btn_Save.setEnabled(flag)
              
-    def save(self):
+    def _save(self):
         self.checkPrice
         self.itemName=self.window.le_ItemName.text()
         if self.itemName=="" or self.itemPrice==0 or self.itemIcon is None:
             message=QMessageBox()
             message.setText(u"Не все данные указаны")
             message.exec_()
-            self.window.btn_Add.setEnabled(False)
+            self.window.btn_Save.setEnabled(False)
             return
         blobImg=QByteArray()
         buff=QBuffer(blobImg)
@@ -103,5 +94,18 @@ class EditItemHandler(QObject):
             self.editItem(blobImg) 
         self.window.close()
         self.emit(QtCore.SIGNAL("RefreshItemTable"))
+    
+    def _checkNameExists(self, itemName):
+        query='Select idItem from Items where itemName like \'%s\'' %(itemName)
+        result=self.DbConnector.getDataFromDb(query)
+        if len(result)>0:
+            self.message=Errors(u"Предмет с таким именем существует")
+            self.message.setWindowTitle(u'Ошибка')
+            self.message.window.show()
+            return True
+        return False             
+    
+    
+    
         
           

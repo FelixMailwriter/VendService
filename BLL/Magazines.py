@@ -8,8 +8,8 @@ from Printer.PrnDK350 import Printer
  
 
 class MagazinesController(QObject):
-    OPERATION_OUTCOME='Outcome'
-    OPERATION_INCOME='Income'
+    OPERATION_OUTCOME='-'
+    OPERATION_INCOME='+'
 
     def __init__(self, form):
         QObject.__init__(self)

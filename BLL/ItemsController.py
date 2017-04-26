@@ -27,7 +27,7 @@ class ItemsController(QObject):
         param["itemName"]=""
         param["itemPrice"]="0"
         param["itemIcon"]=QtGui.QPixmap() 
-        param["DbConnector"]=self.DbConnector
+        #param["DbConnector"]=self.DbConnector
         self.editWindow=EditItem.EditItemHandler(param, 'Add')
         self.form.connect(self.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.form.fillItemsTable)
         self.editWindow.window.show()
@@ -43,7 +43,7 @@ class ItemsController(QObject):
         param["itemName"]=selectedRow[1].text()
         param["itemPrice"]=selectedRow[2].text()
         param["itemIcon"]=self.form.window.ibl_ItemIcon.pixmap()
-        param["DbConnector"]=self.DbConnector
+        #param["DbConnector"]=self.DbConnector
         self.editWindow=EditItem.EditItemHandler(param, 'Edit')
         self.form.connect(self.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.form.fillItemsTable)
         self.editWindow.window.show() 
