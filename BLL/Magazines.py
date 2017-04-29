@@ -249,7 +249,8 @@ class MagazinesController(QObject):
         context.append(dict(Text=''))
         context.append(dict(Text='--------------------------------------'))
         
-        #printer=Printer(context)
+        printer=Printer(context)
+        printer.run()
         
         for s in context:
             st=s['Text']
@@ -272,7 +273,8 @@ class MagazinesController(QObject):
         context.append(dict(Text='')) 
         context.append(dict(Text='--------------------------------------'))
 
-        #printer=Printer(context)
+        printer=Printer(context)
+        printer.run()
         
         for s in context:
             st=s['Text']

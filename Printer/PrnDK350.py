@@ -5,20 +5,22 @@ from ConfigParser import ConfigParser
 from enum import __repr__
 
 class Printer(QtCore.QThread):
-    def __init__(self, items):
+    def __init__(self, items, checkType='NotFisk'):
         QtCore.QThread.__init__(self)
         self.prn_config=self._getSettings()
         self.devPath=self.prn_config['path']    #Путь к принтеру
-        self.checkHeader=self._getCheckHeader() #Читаем заголовок чека
-        #self.items=items                        #Ссодержимое чека (предметы или строки текста)
+        self.items=items                        #Содержимое чека (предметы или строки текста)
         self.prn=None                           #ссылка на порт принтера
         self.command=None                       #команда принтеру
         self.SEQ=0x20                           #Порядковый номер команды
+        self.checkType=checkType
 
     def run(self):
         self.prn=self._getConnection(self.devPath)
-        self._printHeader()
-        self.printCheck()
+        if self.checkType=='Fisk':
+            self._printFiskCheck()
+        elif self.checkType=='NotFisk':
+            self._printNotFiskCheck()
         
     def _getSettings(self):
         filename='config.ini'
@@ -34,26 +36,6 @@ class Printer(QtCore.QThread):
             self._showError(u'Ошибка', u'Ошибка файла конфигурации. Отсутствует секция принтера.')
         return prn_config
 
-    def _getCheckHeader(self):
-        filename='config.ini'
-        section='check_header'
-        parser=ConfigParser()
-        parser.read(filename)
-        prn_config={}
-        if parser.has_section(section):
-            items=parser.items(section)
-            for item in items:
-                prn_config[item[0]]=item[1]
-        else:
-            self._showError(u'Ошибка', u'Ошибка файла конфигурации. Отсутствует секция заголовка чека.')
-        return prn_config        
-
-    def _printHeader(self):
-        items= self.checkHeader.items()
-        for item in items:
-            headerStr='{%s}: {%s}'.format(item[0], item[1])
-            self._printText(headerStr)
-   
     def _getConnection(self, devPath):
         conn = serial.Serial()
         conn.port = devPath
@@ -70,11 +52,64 @@ class Printer(QtCore.QThread):
         conn.dsrdtr = True                  #disable hardware (DSR/DTR) flow control
         return conn
     
-    def printCheck(self, items):
+    def _printFiskCheck(self, items):
     #Открываем порт
         self.prn.open()
     #Открытие фискального чека
         self._openFiskCheck()
+                
+    #Печать продаваемых товаров   
+        for item in items:
+            if item['Price']==None:                                         #Если печатать свободный текст предмета
+                self._printFiskText(item['Text'])
+            else:
+                self._printItem(item['Text'], item['TaxCode'], item['Price'])#Если печатаем описание предмета (имя и цена)        
+    
+    #Печать суммы чека
+        self._writeTotal()
+    
+    #Закрытие фискального чека
+        self._closeFiskCheck()
+        
+    #Закрываем порт
+        self.prn.close()
+               
+    def _openFiskCheck(self):
+
+        #Открываем фискальный чек
+        self._makeCommand(0x30,'1,00000,1')
+        self._sendCommand(self.command)
+
+    def _printItem(self, text, taxCode, price):
+        #Печать информации о продаваемом предмете (Название, кодНДС, Цена)
+        params=r'{}{}{}{}'.format(text, '\t',taxCode, price)    #Формирование строки параметров
+        self._makeCommand(0x34, params)
+        self._sendCommand(self.command)
+
+    def _printFiskText(self, text):
+        #Печать свободного текста
+        #Открываем порт
+        #self.prn.open()
+        self._makeCommand(0x36, text)
+        self._sendCommand(self.command)
+        #Закрываем порт
+        self.prn.close()
+
+    def _writeTotal(self):
+        #Записываем итоговую сумму
+        self._makeCommand(0x35, '')
+        self._sendCommand(self.command)
+
+    def _closeFiskCheck(self):
+        #Закрываем фискальный чек
+        self._makeCommand(0x38, '')
+        self._sendCommand(self.command)
+        
+    def _printNotFiskCheck(self, items):
+    #Открываем порт
+        self.prn.open()
+    #Открытие фискального чека
+        self._openNotFiskCheck()
                 
     #Печать продаваемых товаров   
         for item in items:
@@ -91,34 +126,25 @@ class Printer(QtCore.QThread):
         
     #Закрываем порт
         self.prn.close()
-    
-                
-    def _openFiskCheck(self):
 
-        #Открываем фискальный чек
-        self._makeCommand(0x30,'1,00000,1')
-        self._sendCommand(self.command)
-                
-    def _printText(self, text):
+    def _openNotFiskCheck(self):
+        #Открываем не фискальный чек
+        self._makeCommand(0x26,'')
+        self._sendCommand(self.command) 
+
+    def _printNotFiscText(self, text):
         #Печать свободного текста
-        self._makeCommand(0x36, text)
+        #Открываем порт
+        #self.prn.open()
+        self._makeCommand(0x2A, text)
         self._sendCommand(self.command)
-    
-    def _printItem(self, text, taxCode, price):
-        #Печать информации о продаваемом предмете (Название, кодНДС, Цена)
-        params=r'{}{}{}{}'.format(text, '\t',taxCode, price)    #Формирование строки параметров
-        self._makeCommand(0x34, params)
-        self._sendCommand(self.command)
+        #Закрываем порт
+        #self.prn.close() 
         
-    def _writeTotal(self):
-        #Записываем итоговую сумму
-        self._makeCommand(0x35, '')
-        self._sendCommand(self.command)
-
-    def _closeFiskCheck(self):
-        #Закрываем фискальный чек
-        self._makeCommand(0x38, '')
-        self._sendCommand(self.command)
+    def _closeNotFiskCheck(self):
+        #Закрываем не фискальный чек
+        self._makeCommand(0x27, '')
+        self._sendCommand(self.command)    
     
     def _makeCommand(self, commandCode, commandParams):
         self.SEQ+=1                                     #Увеличиваем счетчик команд на 1

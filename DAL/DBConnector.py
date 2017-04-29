@@ -13,7 +13,7 @@ class DbConnector():
              
     def getConnection(self):
         conn=None
-        dbconfig=self.getDBConfig(filename='config.ini', section='mysql') 
+        dbconfig=self._getDBConfig(filename='config.ini', section='mysql') 
         try:
             conn=mysql.connector.connect(**dbconfig)
                 
@@ -24,7 +24,7 @@ class DbConnector():
         return conn
         
                 
-    def getDBConfig(self, **param):
+    def _getDBConfig(self, **param):
         filename=param['filename']
         section=param['section']
         parser=ConfigParser()
@@ -39,6 +39,7 @@ class DbConnector():
         return config
     
     def getDataFromDb(self, query):
+        conn = cur = None
         try:
             conn=self.getConnection()
             cur=conn.cursor()
@@ -54,6 +55,7 @@ class DbConnector():
         
     
     def insertDataToDB(self, query):
+        conn = cur = None
         try:
             conn=self.getConnection()
             cur=conn.cursor()
@@ -69,6 +71,7 @@ class DbConnector():
             if conn is not None: conn.close() 
         
     def deleteDataFromTable(self, query):
+        conn = cur = None
         try:
             conn=self.getConnection()
             cur=conn.cursor()
@@ -78,8 +81,8 @@ class DbConnector():
             self._showError(u'Ошибка', u'Ошибка подключения к базе данных')
             return False
         finally:
-            cur.close()
-            conn.close()
+            if cur is not None: cur.close()
+            if conn is not None: conn.close()
         return True  
     
     def _showError(self, header, message): 
