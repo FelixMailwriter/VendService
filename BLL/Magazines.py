@@ -217,32 +217,32 @@ class MagazinesController(QObject):
             
         context.append(dict(Text='--------------------------------------'))
         context.append(dict(Text=''))
-        context.append(dict(Text='{:^45}'.format('Begin:')))
+        context.append(dict(Text='{:^35}'.format('Begin:')))
         for item in ItemsInOldTable:
-            row='{:<45}{:>3}'.format(str(item[2]), str(item[1]))
+            row='{:<35}{:>3}'.format(str(item[2]), str(item[1]))
             context.append(dict(Text=row))
             
         context.append(dict(Text=''))
         context.append(dict(Text='--------------------------------------'))
         
-        #if len(itemMovementTable)==0:
-        #    return 
+        if len(itemMovementTable)==0:
+            return 
                         
-        context.append(dict(Text='{:^45}'.format('Movements:')))
+        context.append(dict(Text='{:^35}'.format('Movements:')))
         for item in itemMovementTable:
             if item[3]==self.OPERATION_INCOME:
                 sign='+'
             else:
                 sign='-'
-            row='{:<44}{}{:>3}'.format(str(item[1]), sign, str(abs(item[4])))
+            row='{:<34}{}{:>3}'.format(str(item[1]), sign, str(abs(item[4])))
             context.append(dict(Text=row))
         
         context.append(dict(Text=''))
         context.append(dict(Text='--------------------------------------')) 
         
-        context.append(dict(Text='{:^45}'.format('Rest:')))      
+        context.append(dict(Text='{:^35}'.format('Rest:')))      
         for item in ItemsInNewTable:
-            row='{:<45}{:>3}'.format(str(item[2]), str(item[1]))
+            row='{:<35}{:>3}'.format(str(item[2]), str(item[1]))
             context.append(dict(Text=row))
 
         context.append(dict(Text=''))
@@ -263,15 +263,15 @@ class MagazinesController(QObject):
         
         context=[]
         context.append(dict(Text=''))
-        context.append(dict(Text='{:^45}'.format('Magazines load')))  
-        context.append(dict(Text='{:^45}'.format('Date: %s' %(str(datetime.datetime.now())))))
-        context.append(dict(Text='--------------------------------------'))
+        context.append(dict(Text='{:^35}'.format('Magazines load')))  
+        context.append(dict(Text='{:^35}'.format('Date: %s' %(str(datetime.datetime.now())))))
+        context.append(dict(Text='------------'))
         context.append(dict(Text=''))               
         for row in result:
-            rowStr='{:<45}{:>3}'.format(str(row[0])+'.'+ str(row[1]), str(row[2]))
+            rowStr='{:<35}{:>3}'.format(str(row[0])+'.'+ str(row[1]), str(row[2]))
             context.append(dict(Text=rowStr))
         context.append(dict(Text='')) 
-        context.append(dict(Text='--------------------------------------'))
+        context.append(dict(Text='------------'))
 
         printer=Printer(context)
         printer.run()
