@@ -277,7 +277,9 @@ class MainWindow(QObject):
     #--------------------------------------------------------------
     # Reports
     
-       
+    def printZReport(self):
+        pass
+           
 class NonEditColumnDelegate(QItemDelegate):
     def createEditor(self, parent, options, index):
         return None
