@@ -2,8 +2,7 @@
 
 import os
 from PyQt4 import QtCore, uic, QtGui 
-from PyQt4.Qt import QObject, QFont, QHeaderView, QComboBox, QItemDelegate,\
-    QMessageBox
+from PyQt4.Qt import QObject, QFont, QHeaderView, QComboBox, QItemDelegate
 from BLL.ItemsController import ItemsController
 from Magazines import MagazinesController
 from Report import ReportController
@@ -46,6 +45,9 @@ class MainWindow(QObject):
         self.window.tblw_Magazines.cellClicked.connect(self._magTableCellClicked)
         self.window.btn_plus.clicked.connect(self._plusQty)
         self.window.btn_minus.clicked.connect(self._minusQty)
+        
+        #Прописываем события кнопок для отчетов
+        self.window.btn_AddMag.clicked.connect(self._addMagazin)
         
         #Подключаемся к событию окончания добавления и редактирования предмета
         #self.connect(self.ItemsController.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.fillItemsTable)
@@ -239,7 +241,6 @@ class MainWindow(QObject):
         magNum=item.text()        
         self.window.llbl_magNumber.setText(magNum) 
     
-
     def _plusQty(self):
         qty=self._getQtyToChange()
         row=self.MagazinsTable.currentRow()
@@ -272,7 +273,11 @@ class MainWindow(QObject):
             return 0                        
         else:
             return qty
-        
+     
+    #--------------------------------------------------------------
+    # Reports
+    
+       
 class NonEditColumnDelegate(QItemDelegate):
     def createEditor(self, parent, options, index):
         return None

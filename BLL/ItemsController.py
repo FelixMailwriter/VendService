@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.Qt import QObject, QMessageBox 
+from PyQt4.Qt import QObject
 import base64
 from DAL.DBConnector import DbConnector
 import EditItem
