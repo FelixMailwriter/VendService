@@ -47,7 +47,8 @@ class MainWindow(QObject):
         self.window.btn_minus.clicked.connect(self._minusQty)
         
         #Прописываем события кнопок для отчетов
-        self.window.btn_AddMag.clicked.connect(self._addMagazin)
+        self.window.btn_zReport.clicked.connect(self.ReportController.printZReport)
+        self.window.btn_xReport.clicked.connect(self.ReportController.printXReport)
         
         #Подключаемся к событию окончания добавления и редактирования предмета
         #self.connect(self.ItemsController.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.fillItemsTable)

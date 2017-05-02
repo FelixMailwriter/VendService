@@ -12,8 +12,16 @@ class ReportController(QObject):
         QObject.__init__(self)
         self.DbConnector=DbConnector()
         self.form=form
+        self.printer=Printer()
         
         #Прописываем события кнопок
          ############
 
-      
+    def printXReport(self):
+        self.printer.printXReport()
+        
+    def printZReport(self):
+        self.printer.printZReport()
+        
+        
+          

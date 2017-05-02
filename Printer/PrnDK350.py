@@ -6,20 +6,37 @@ from enum import __repr__
 
 
 class Printer(QtCore.QThread):
-    def __init__(self, items, checkType='NotFisk'):
+    def __init__(self):#, items, checkType='NotFisk'):
         QtCore.QThread.__init__(self)
         self.prn_config=self._getSettings()
         self.devPath=self.prn_config['path']    #Путь к принтеру
-        self.items=items                        #Содержимое чека (предметы или строки текста)
+        #self.items=items                        #Содержимое чека (предметы или строки текста)
         self.prn=None                           #ссылка на порт принтера
         self.command=None                       #команда принтеру
         self.SEQ=0x20                           #Порядковый номер команды
-        self.checkType=checkType
+        #self.checkType=checkType
+        self.prn=self._getConnection(self.devPath)
 
     def run(self):
-        self.prn=self._getConnection(self.devPath)
         self._printCheck()
+
+    def printXReport(self): 
+         #Информация о накоплениях за день
+        #Открываем порт
+        self.prn.open()         
+        self._sendCommand(0x45, '')
+        self.msleep(100)
+        self._getAnswer()
+        self.prn.close()
         
+    def printZReport(self):
+        #Открываем порт
+        self.prn.open()         
+        self._sendCommand(0x78, 'K3')
+        self.msleep(100)
+        self._getAnswer()
+        self.prn.close()        
+               
     def _getSettings(self):
         filename='config.ini'
         section='printer'
@@ -74,7 +91,6 @@ class Printer(QtCore.QThread):
             self._sendCommand(0x35, '')
             #Закрываем фискальный чек
             self._sendCommand(0x38, '')
-
     
     def _printNotFiskCheck(self):
         #Открываем не фискальный чек
@@ -124,7 +140,6 @@ class Printer(QtCore.QThread):
         #дописываем байт признака конца пакета
         command[packadgeLength-1]=0x03
         return command
-        
 
     def _getParamsBytes(self, commandParams):
         seqParamSymbols=[]                          #Параметры, разбитые по символам
@@ -167,7 +182,9 @@ class Printer(QtCore.QThread):
         #получение данных от принтера
         print 'wait for answer...'
         for i in range (1,4):
+            print 'iter %d' %(i)
             l=self.prn.in_waiting
+            print l
             if l>0:
                 data=self.prn.read(l)
                 print 'answer received'
@@ -175,15 +192,19 @@ class Printer(QtCore.QThread):
                 print len(data)
                 self.showRecevedData(data)
                 print data
-                return data
-            self.msleep(100)
+            self.msleep(1000)
+            #return data
+            #
+
 
     def showRecevedData(self, data):
         #распечатка данных от принтера
         print '---------------'
         print 'Reseived data:'
+        s=''
         for i in range(0, len(data)):
-            print data[i].encode('hex') 
+            s+=data[i].encode('hex') + ' '
+        print s 
         print '---------------'        
             
     def _checkAnswer(self, answer):
