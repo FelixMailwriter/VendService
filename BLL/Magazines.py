@@ -249,10 +249,15 @@ class MagazinesController(QObject):
         context.append(dict(Text=''))
         context.append(dict(Text='--------------------------------------'))
         
-        printer=Printer()#context)
-        printer.items=context
-        printer.checkType='NotFisk'
-        printer.run()
+        try:
+            printer=Printer()#context)
+            printer.items=context
+            printer.checkType='NotFisk'
+            printer.run()
+        except AttributeError:
+            self.message=Errors(u"Принтер не найден")
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()             
         
         for s in context:
             st=s['Text']
@@ -278,11 +283,16 @@ class MagazinesController(QObject):
         #printer=Printer(context)
         #printer.run()
         
-        printer=Printer()#context)
-        printer.items=context
-        printer.checkType='NotFisk'
-        printer.run()
-        
+        try:
+            printer=Printer()#context)
+            printer.items=context
+            printer.checkType='NotFisk'
+            printer.run()
+        except AttributeError:
+            self.message=Errors(u"Принтер не найден")
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show() 
+                    
         for s in context:
             st=s['Text']
             print st              

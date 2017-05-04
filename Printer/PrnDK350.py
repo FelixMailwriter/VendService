@@ -45,6 +45,10 @@ class Printer(QtCore.QThread):
         self.msleep(100)
         answer=self._getAnswer()
         beginRead=False
+        if answer is None:
+            self.prn.close()
+            raise AttributeError
+            return
         for statusByte in answer:
             statusByte=statusByte.encode('hex')
             if statusByte=='04':

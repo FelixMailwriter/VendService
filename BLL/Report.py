@@ -24,7 +24,14 @@ class ReportController(QObject):
         self.printer.printZReport()
         
     def getStatus(self):
-        self.printer.getStatus()
+        try:
+            self.printer.getStatus()
+        except AttributeError:
+            self.message=Errors(u"Принтер не найден")
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show() 
+
+            
         
         
           
