@@ -4,23 +4,29 @@ import serial
 from ConfigParser import ConfigParser
 from enum import __repr__
 import binascii
+from DAL.DBConnector import DbConnector
 
 
 class Printer(QtCore.QThread):
-    def __init__(self):#, items, checkType='NotFisk'):
+    def __init__(self):
         QtCore.QThread.__init__(self)
         self.prn_config=self._getSettings()
         self.devPath=self.prn_config['path']    #Путь к принтеру
-        #self.items=items                        #Содержимое чека (предметы или строки текста)
         self.prn=None                           #ссылка на порт принтера
         self.command=None                       #команда принтеру
         self.SEQ=0x20                           #Порядковый номер команды
-        #self.checkType=checkType
+        self.DbConnector=DbConnector()
         self.status=[]
         self.prn=self._getConnection(self.devPath)
 
-    def run(self):
-        self._printCheck()
+    def run(self, items, checkType='NotFisk'):
+        self.items=items
+        self.checkType=checkType
+        status, statusDescription=self.checkStatus
+        if status:
+            self._printCheck()
+        else:
+            raise PrinterHardwareException ('Printer is not ready')
 
     def printXReport(self): 
          #Информация о накоплениях за день
@@ -38,8 +44,36 @@ class Printer(QtCore.QThread):
         self.msleep(100)
         self._getAnswer()
         self.prn.close()
+
+    def checkStatus(self):
+        status=True
+        statusBytes=self._getStatusBytes()
         
-    def getStatus(self):
+        statusDescription=[]
+        if statusBytes[0][2]=='1':
+            statusDescription.append('Clock is not set')
+        if statusBytes[1][5]=='1':
+            statusDescription.append('Paper\'s lock is opened')
+        if statusBytes[2][0]=='1':
+            statusDescription.append('Paper is finished')
+        if statusBytes[2][1]=='1':
+            statusDescription.append('Paper is few')
+        if statusBytes[2][2]=='1':
+            statusDescription.append('Fiscal memory is fewer than 4000 byte')                
+        if statusBytes[2][4]=='1':
+            statusDescription.append('Fiscal memory is fewer than 3000 byte')
+        if statusBytes[2][6]=='1':
+            statusDescription.append('Fiscal memory is fewer than 2000 byte')
+        if statusBytes[4][3]=='1':
+            statusDescription.append('Fiscal memory is fewer than 50 free records')
+        if statusBytes[4][4]=='1':
+            statusDescription.append('Fiscal memory is full')
+        if statusBytes[5][0]=='1':
+            statusDescription.append('Fiscal memory is set in READONLY mode')
+        return status, statusDescription            
+                    
+    def _getStatusBytes(self):
+        status=[]
         self.prn.open()         
         self._sendCommand(0x4A, '')
         self.msleep(100)
@@ -47,7 +81,7 @@ class Printer(QtCore.QThread):
         beginRead=False
         if answer is None:
             self.prn.close()
-            raise AttributeError
+            raise PrinterHardwareException(u'Принтер не найден')
             return
         for statusByte in answer:
             statusByte=statusByte.encode('hex')
@@ -56,13 +90,15 @@ class Printer(QtCore.QThread):
                 continue
             if statusByte=='05':
                 self.prn.close()
-                return
+                return status 
             if beginRead:
                 byteStr=self._byte2bits(statusByte)
-                self.status.append(byteStr[2:])
-                
-                print self.status
-                        
+                byteStr=byteStr[2:]
+                revertStr=byteStr[::-1]
+                status.append(revertStr)
+                print status
+        return status                
+
                
     def _getSettings(self):
         filename='config.ini'

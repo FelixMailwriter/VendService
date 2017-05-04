@@ -4,7 +4,7 @@ from PyQt4.Qt import QObject, QStringList
 from DAL.DBConnector import DbConnector
 import datetime
 from Errors import Errors
-from Printer.PrnDK350 import Printer
+import Printer.PrnDK350 as Printer
 
 class ReportController(QObject):
 
@@ -12,7 +12,7 @@ class ReportController(QObject):
         QObject.__init__(self)
         self.DbConnector=DbConnector()
         self.form=form
-        self.printer=Printer()
+        self.printer=Printer.Printer()
         
         #Прописываем события кнопок
          ############
@@ -23,11 +23,11 @@ class ReportController(QObject):
     def printZReport(self):
         self.printer.printZReport()
         
-    def getStatus(self):
+    def checkStatus(self):
         try:
-            self.printer.getStatus()
-        except AttributeError:
-            self.message=Errors(u"Принтер не найден")
+            self.printer.checkStatus()
+        except Printer.PrinterHardwareException as e:
+            self.message=Errors(e.value)
             self.message.window.setWindowTitle(u'Ошибка')
             self.message.window.show() 
 

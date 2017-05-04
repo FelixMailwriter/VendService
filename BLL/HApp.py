@@ -50,7 +50,7 @@ class MainWindow(QObject):
         self.window.btn_zReport.clicked.connect(self.ReportController.printZReport)
         self.window.btn_xReport.clicked.connect(self.ReportController.printXReport)
         
-        self.window.bts_getPrinterStatus.clicked.connect(self.ReportController.getStatus)
+        self.window.bts_getPrinterStatus.clicked.connect(self.ReportController.checkStatus)
         
         #Подключаемся к событию окончания добавления и редактирования предмета
         #self.connect(self.ItemsController.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.fillItemsTable)

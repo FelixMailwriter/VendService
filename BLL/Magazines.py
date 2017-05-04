@@ -4,7 +4,7 @@ from PyQt4.Qt import QObject, QStringList
 from DAL.DBConnector import DbConnector
 import datetime
 from Errors import Errors
-from Printer.PrnDK350 import Printer
+import Printer.PrnDK350 as Printer
  
 
 class MagazinesController(QObject):
@@ -201,7 +201,7 @@ class MagazinesController(QObject):
         result=self.DbConnector.getDataFromDb(query)
         return result[0][0]
             
-    def _printRechargeReport(self, ItemsInOldTable, ItemsInNewTable):
+    def _makeRechargeReport(self, ItemsInOldTable, ItemsInNewTable):
         context=[]
         query='select IM.IdMovement, Items.itemName, IM.OperationDate, IM.OperationType, '+\
                 'IM.qty from ItemsMovements as IM, Items '+\
@@ -249,21 +249,13 @@ class MagazinesController(QObject):
         context.append(dict(Text=''))
         context.append(dict(Text='--------------------------------------'))
         
-        try:
-            printer=Printer()#context)
-            printer.items=context
-            printer.checkType='NotFisk'
-            printer.run()
-        except AttributeError:
-            self.message=Errors(u"Принтер не найден")
-            self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show()             
-        
+        self._printReport(context, 'NotFisk')
+                    
         for s in context:
             st=s['Text']
             print st                        
     
-    def _printMagazinesLoadReport(self):
+    def _makeMagazinesLoadReport(self):
         query='select M.idMagazins, I.ItemName, M.ItemQTY from Magazins as M, Items as I '+\
                 'where M.ItemId=I.idItem'
         result=self.DbConnector.getDataFromDb(query)
@@ -279,21 +271,28 @@ class MagazinesController(QObject):
             context.append(dict(Text=rowStr))
         context.append(dict(Text='')) 
         context.append(dict(Text='------------'))
-
-        #printer=Printer(context)
-        #printer.run()
         
-        try:
-            printer=Printer()#context)
-            printer.items=context
-            printer.checkType='NotFisk'
-            printer.run()
-        except AttributeError:
-            self.message=Errors(u"Принтер не найден")
-            self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show() 
+        self._printReport(context, 'NotFisk')             
                     
         for s in context:
             st=s['Text']
-            print st              
+            print st
+            
+    def _printReport(self, context, checkType):
+        try:
+            printer=Printer()
+            printer.run(context, checkType)
+        except AttributeError:
+            self.message=Errors(u"Принтер не найден")
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()
+            
+        except Printer.PrinterHardwareException:
+            self.message=Errors(u"Принтер не готов")
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()
+    
+    
+    
+                  
         
