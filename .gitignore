@@ -1,0 +1,12 @@
+setup.cfg
+MANIFEST
+build
+dist
+*.pdb
+*.pyc
+*.pyo
+tmp
+TAGS
+pyodbc.egg-info
+pyodbc.conf
+/venv*

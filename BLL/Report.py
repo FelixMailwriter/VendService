@@ -23,5 +23,8 @@ class ReportController(QObject):
     def printZReport(self):
         self.printer.printZReport()
         
+    def getStatus(self):
+        self.printer.getStatus()
+        
         
           

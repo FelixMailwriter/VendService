@@ -3,6 +3,7 @@ from PyQt4 import QtCore
 import serial
 from ConfigParser import ConfigParser
 from enum import __repr__
+import binascii
 
 
 class Printer(QtCore.QThread):
@@ -15,6 +16,7 @@ class Printer(QtCore.QThread):
         self.command=None                       #команда принтеру
         self.SEQ=0x20                           #Порядковый номер команды
         #self.checkType=checkType
+        self.status=[]
         self.prn=self._getConnection(self.devPath)
 
     def run(self):
@@ -24,7 +26,7 @@ class Printer(QtCore.QThread):
          #Информация о накоплениях за день
         #Открываем порт
         self.prn.open()         
-        self._sendCommand(0x45, '')
+        self._sendCommand(0x69, '')
         self.msleep(100)
         self._getAnswer()
         self.prn.close()
@@ -35,7 +37,28 @@ class Printer(QtCore.QThread):
         self._sendCommand(0x78, 'K3')
         self.msleep(100)
         self._getAnswer()
-        self.prn.close()        
+        self.prn.close()
+        
+    def getStatus(self):
+        self.prn.open()         
+        self._sendCommand(0x4A, '')
+        self.msleep(100)
+        answer=self._getAnswer()
+        beginRead=False
+        for statusByte in answer:
+            statusByte=statusByte.encode('hex')
+            if statusByte=='04':
+                beginRead=True
+                continue
+            if statusByte=='05':
+                self.prn.close()
+                return
+            if beginRead:
+                byteStr=self._byte2bits(statusByte)
+                self.status.append(byteStr[2:])
+                
+                print self.status
+                        
                
     def _getSettings(self):
         filename='config.ini'
@@ -191,10 +214,9 @@ class Printer(QtCore.QThread):
                 print 'data length ' 
                 print len(data)
                 self.showRecevedData(data)
-                print data
+                return data
             self.msleep(1000)
-            #return data
-            #
+
 
 
     def showRecevedData(self, data):
@@ -209,6 +231,12 @@ class Printer(QtCore.QThread):
             
     def _checkAnswer(self, answer):
         pass
+    
+    def _byte2bits(self,hex_string):
+        n = len(hex_string)
+        p= binascii.unhexlify(hex_string.zfill(n + (n & 1)))   
+        a=bin(int(binascii.hexlify(p), 16))
+        return a
         
 
 class PrinterHardwareException(Exception):

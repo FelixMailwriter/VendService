@@ -562,9 +562,9 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_2">
+              <widget class="QPushButton" name="bts_getPrinterStatus">
                <property name="text">
-                <string>PushButton</string>
+                <string>Printer status</string>
                </property>
               </widget>
              </item>
