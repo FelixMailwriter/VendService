@@ -4,6 +4,7 @@ encoding//BLL/HApp.py=utf-8
 encoding//BLL/ItemsController.py=utf-8
 encoding//BLL/Magazines.py=utf-8
 encoding//BLL/Report.py=utf-8
+encoding//Common/Logs.py=utf-8
 encoding//DAL/DBConnector.py=utf-8
 encoding//Printer/PrnDK350.py=utf-8
 encoding/Errors.py=utf-8

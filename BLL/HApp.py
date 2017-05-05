@@ -52,8 +52,8 @@ class MainWindow(QObject):
         
         self.window.bts_getPrinterStatus.clicked.connect(self.ReportController.checkStatus)
         
-        #Подключаемся к событию окончания добавления и редактирования предмета
-        #self.connect(self.ItemsController.editWindow, QtCore.SIGNAL("RefreshItemTable"), self.fillItemsTable)
+        #Подписываемся на событие "Принтер не найден"
+        self.connect(self.MagazinesController, QtCore.SIGNAL("Printer is not found"), self._prnIsNotFound)
        
         self.ItemsList=self.MagazinesController.getItemsList() #Список имеющихся предметов для выпадающего списка
         
@@ -192,9 +192,9 @@ class MainWindow(QObject):
             
         if self._checkCorrectMagazineTable(MagazinsMappingList): 
             return
-        
-        else: 
-            self.MagazinesController.saveMagazinsMapping(MagazinsMappingList)
+
+        self.MagazinesController.saveMagazinsMapping(MagazinsMappingList)
+          
             
     def _checkCorrectMagazineTable(self, MagazinsMappingList):
         for i in range (0, len(MagazinsMappingList)):
@@ -282,7 +282,13 @@ class MainWindow(QObject):
     
     def printZReport(self):
         pass
-           
+    
+    
+    def _prnIsNotFound(self):
+        self.message=Errors(u"Принтер не найден")
+        self.message.window.setWindowTitle(u'Ошибка')
+        self.message.window.show()
+                   
 class NonEditColumnDelegate(QItemDelegate):
     def createEditor(self, parent, options, index):
         return None

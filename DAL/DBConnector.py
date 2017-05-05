@@ -4,6 +4,7 @@ import mysql.connector
 from mysql.connector import Error
 from ConfigParser import ConfigParser
 from Errors import Errors
+from datetime import datetime
 
 
 class DbConnector():
@@ -83,7 +84,17 @@ class DbConnector():
         finally:
             if cur is not None: cur.close()
             if conn is not None: conn.close()
-        return True  
+        return True
+    
+    def writeLog(self, logMessages):
+        for logMessage in logMessages:
+            priority=logMessage.priority
+            source=logMessage.sourse
+            event=logMessage.message
+            query='Insert into Log (EventType, Source, EventDate, Event)'+\
+                ' values (\'%s\', \'%s\', \'%s\', \'%s\')' \
+                %(priority, source, str(datetime.now()), event)
+            self.insertDataToDB(query)  
     
     def _showError(self, header, message): 
         self.message=Errors(message)

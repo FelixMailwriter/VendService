@@ -12,7 +12,6 @@ class EditItemHandler(QObject):
     def __init__(self, param, typeOperation):
         QObject.__init__(self)
         
-        #self.DbConnector=param["DbConnector"]
         self.DbConnector=DbConnector()
         self.typeOperation=typeOperation
         self.itemId=param["itemId"]

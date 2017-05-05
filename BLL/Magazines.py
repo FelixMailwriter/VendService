@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+from PyQt4 import QtCore
 from PyQt4.Qt import QObject, QStringList
 from DAL.DBConnector import DbConnector
 import datetime
@@ -71,9 +72,12 @@ class MagazinesController(QObject):
         ItemsInNewTable=self._groupMagazinesMapTable(magazinesMap)
         ItemMovementTable=self._getItemMovementTable(ItemsInOldTable, ItemsInNewTable)
         query='Select max(IdMovement) from ItemsMovements'
-        result=self.DbConnector.getDataFromDb(query)[0][0]
-        if result is None:
+        resultQuery=self.DbConnector.getDataFromDb(query)
+        if len(resultQuery)==0 or resultQuery is None:
             result=0
+        else:
+            result=resultQuery[0][0]
+            
         idRecharge=result+1
         for itemMovement in ItemMovementTable:
             idItem=itemMovement[0]
@@ -211,7 +215,7 @@ class MagazinesController(QObject):
                 'and IM.idItem=Items.idItem '+\
                 'order by Items.itemName'
         itemMovementTable=self.DbConnector.getDataFromDb(query)
-        if len(itemMovementTable)==0:
+        if len(itemMovementTable)==0 or itemMovementTable is None:
             return
         context.append(dict(Text=''))
         context.append(dict(Text='Report: %s' %(str(itemMovementTable[0][0]))))
@@ -283,16 +287,12 @@ class MagazinesController(QObject):
     def _printReport(self, context, checkType):
         try:
             printer=Printer.Printer()
+            logMessages=printer.checkStatus()
+            self.DbConnector.writeLog(logMessages)
             printer.run(context, checkType)
-        except AttributeError:
-            self.message=Errors(u"Принтер не найден")
-            self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show()
-            
-        except Printer.PrinterHardwareException:
-            self.message=Errors(u"Принтер не готов")
-            self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show()
+        except Printer.PrinterHardwareException as e:
+            self.emit(QtCore.SIGNAL('Printer is not found'))
+
     
     
     

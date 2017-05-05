@@ -4,7 +4,7 @@ import serial
 from ConfigParser import ConfigParser
 from enum import __repr__
 import binascii
-from DAL.DBConnector import DbConnector
+from Common.Logs import LogEvent
 
 
 class Printer(QtCore.QThread):
@@ -15,18 +15,14 @@ class Printer(QtCore.QThread):
         self.prn=None                           #ссылка на порт принтера
         self.command=None                       #команда принтеру
         self.SEQ=0x20                           #Порядковый номер команды
-        self.DbConnector=DbConnector()
         self.status=[]
         self.prn=self._getConnection(self.devPath)
 
     def run(self, items, checkType='NotFisk'):
         self.items=items
         self.checkType=checkType
-        status, statusDescription=self.checkStatus()
-        if status:
-            self._printCheck()
-        else:
-            raise PrinterHardwareException ('Printer is not ready')
+        self._printCheck()
+
 
     def printXReport(self): 
          #Информация о накоплениях за день
@@ -46,31 +42,44 @@ class Printer(QtCore.QThread):
         self.prn.close()
 
     def checkStatus(self):
-        status=True
+        ready=True
+        logList=[]       
         statusBytes=self._getStatusBytes()
-        
-        statusDescription=[]
+
         if statusBytes[0][2]=='1':
-            statusDescription.append('Clock is not set')
+            log=LogEvent('Warning', 'Printer', 'Clock is not set')
+            logList.append(log)
         if statusBytes[1][5]=='1':
-            statusDescription.append('Paper\'s lock is opened')
-        if statusBytes[2][0]=='1':
-            statusDescription.append('Paper is finished')
+            log=LogEvent('Info', 'Printer', 'Paper\'s lock is opened')
+            logList.append(log)            
         if statusBytes[2][1]=='1':
-            statusDescription.append('Paper is few')
-        if statusBytes[2][2]=='1':
-            statusDescription.append('Fiscal memory is fewer than 4000 byte')                
-        if statusBytes[2][4]=='1':
-            statusDescription.append('Fiscal memory is fewer than 3000 byte')
-        if statusBytes[2][6]=='1':
-            statusDescription.append('Fiscal memory is fewer than 2000 byte')
-        if statusBytes[4][3]=='1':
-            statusDescription.append('Fiscal memory is fewer than 50 free records')
+            log=LogEvent('Warning', 'Printer', 'Paper is few')
+            logList.append(log)            
+        elif statusBytes[2][0]=='1':
+            log=LogEvent('Critical', 'Printer', 'Paper is finished')
+            logList.append(log)            
         if statusBytes[4][4]=='1':
-            statusDescription.append('Fiscal memory is full')
+            log=LogEvent('Critical', 'Printer', 'Fiscal memory is full')
+            logList.append(log)
+        elif statusBytes[4][3]=='1':
+            log=LogEvent('Warning', 'Printer', 'Fiscal memory is fewer than 50 free records')
+            logList.append(log)
+        elif statusBytes[2][6]=='1':
+            log=LogEvent('Warning', 'Printer', 'Fiscal memory is fewer than 2000 byte')
+            logList.append(log)
+        elif statusBytes[2][4]=='1':
+            log=LogEvent('Warning', 'Printer', 'Fiscal memory is fewer than 3000 byte')
+            logList.append(log)
+        elif statusBytes[2][2]=='1':
+            log=LogEvent('Warning', 'Printer', 'Fiscal memory is fewer than 4000 byte')
+            logList.append(log)
         if statusBytes[5][0]=='1':
-            statusDescription.append('Fiscal memory is set in READONLY mode')
-        return status, statusDescription            
+            log=LogEvent('Critical', 'Printer', 'Fiscal memory is set in READONLY mode')
+            logList.append(log)
+        
+        if not ready:
+            raise PrinterHardwareException(u"Принтер не готов")
+        return logList            
                     
     def _getStatusBytes(self):
         status=[]
