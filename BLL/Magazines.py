@@ -86,10 +86,12 @@ class MagazinesController(QObject):
         #Печатаем отчеты
         if len(ItemMovementTable)==0:
             #печатаем отчет о загрузке магазинов
-            self._printMagazinesLoadReport()
+            magazinesLoadReport=self._makeMagazinesLoadReport()
+            self._printReport(magazinesLoadReport, 'NotFisk')
         else:    
             #печатаем отчет о перезарядке
-            self._printRechargeReport(ItemsInOldTable, ItemsInNewTable)
+            printRechargeReport=self._makeRechargeReport(ItemsInOldTable, ItemsInNewTable)
+            self._printReport(printRechargeReport, 'NotFisk')
         return result
 
     def _groupMagazinesMapTable(self,magazinesMap):
@@ -249,12 +251,12 @@ class MagazinesController(QObject):
         context.append(dict(Text=''))
         context.append(dict(Text='--------------------------------------'))
         
-        self._printReport(context, 'NotFisk')
-                    
         for s in context:
             st=s['Text']
-            print st                        
-    
+            print st
+                    
+        return context
+                    
     def _makeMagazinesLoadReport(self):
         query='select M.idMagazins, I.ItemName, M.ItemQTY from Magazins as M, Items as I '+\
                 'where M.ItemId=I.idItem'
@@ -272,15 +274,15 @@ class MagazinesController(QObject):
         context.append(dict(Text='')) 
         context.append(dict(Text='------------'))
         
-        self._printReport(context, 'NotFisk')             
-                    
         for s in context:
             st=s['Text']
-            print st
-            
+            print st        
+        
+        return context
+                         
     def _printReport(self, context, checkType):
         try:
-            printer=Printer()
+            printer=Printer.Printer()
             printer.run(context, checkType)
         except AttributeError:
             self.message=Errors(u"Принтер не найден")

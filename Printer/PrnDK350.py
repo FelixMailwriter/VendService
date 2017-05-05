@@ -22,7 +22,7 @@ class Printer(QtCore.QThread):
     def run(self, items, checkType='NotFisk'):
         self.items=items
         self.checkType=checkType
-        status, statusDescription=self.checkStatus
+        status, statusDescription=self.checkStatus()
         if status:
             self._printCheck()
         else:
