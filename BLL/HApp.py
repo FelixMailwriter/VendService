@@ -47,10 +47,10 @@ class MainWindow(QObject):
         self.window.btn_minus.clicked.connect(self._minusQty)
         
         #Прописываем события кнопок для отчетов
-        self.window.btn_zReport.clicked.connect(self.ReportController.printZReport)
-        self.window.btn_xReport.clicked.connect(self.ReportController.printXReport)
+        #self.window.btn_zReport.clicked.connect(self.ReportController.printZReport)
+        #self.window.btn_xReport.clicked.connect(self.ReportController.printXReport)
         
-        self.window.bts_getPrinterStatus.clicked.connect(self.ReportController.checkStatus)
+        #self.window.bts_getPrinterStatus.clicked.connect(self.ReportController.checkStatus)
         
         #Подписываемся на событие "Принтер не найден"
         self.connect(self.MagazinesController, QtCore.SIGNAL("Printer is not found"), self._prnIsNotFound)
