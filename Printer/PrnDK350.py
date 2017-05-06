@@ -107,7 +107,6 @@ class Printer(QtCore.QThread):
                 status.append(revertStr)
                 print status
         return status                
-
                
     def _getSettings(self):
         filename='config.ini'
@@ -265,9 +264,8 @@ class Printer(QtCore.QThread):
                 self.showRecevedData(data)
                 return data
             self.msleep(1000)
-
-
-
+ 
+            
     def showRecevedData(self, data):
         #распечатка данных от принтера
         print '---------------'
@@ -278,9 +276,7 @@ class Printer(QtCore.QThread):
         print s 
         print '---------------'        
             
-    def _checkAnswer(self, answer):
-        pass
-    
+   
     def _byte2bits(self,hex_string):
         n = len(hex_string)
         p= binascii.unhexlify(hex_string.zfill(n + (n & 1)))   

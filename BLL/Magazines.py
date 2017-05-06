@@ -72,11 +72,9 @@ class MagazinesController(QObject):
         ItemsInNewTable=self._groupMagazinesMapTable(magazinesMap)
         ItemMovementTable=self._getItemMovementTable(ItemsInOldTable, ItemsInNewTable)
         query='Select max(IdMovement) from ItemsMovements'
-        resultQuery=self.DbConnector.getDataFromDb(query)
-        if len(resultQuery)==0 or resultQuery is None:
+        result=self.DbConnector.getDataFromDb(query, 'one')[0]
+        if result is None:
             result=0
-        else:
-            result=resultQuery[0][0]
             
         idRecharge=result+1
         for itemMovement in ItemMovementTable:
