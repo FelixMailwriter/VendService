@@ -15,12 +15,12 @@ class ItemsController(QObject):
         self.form=form
         self.editWindow=None
 
-        
+    '''    
     def getItems(self):
         query='SELECT idItem, itemName, ItemPrice from Items'
         result = self.DbConnector.getDataFromDb(query)
         return result
-
+    '''
     def addItem(self):
         param={}
         param["itemId"]=0
@@ -66,6 +66,8 @@ class ItemsController(QObject):
             self.message.window.setWindowTitle(u'Ошибка')
             self.message.window.show()
             return
+        #Делаем предмет невидимым
+        query=''
         query='Delete from Items where idItem=%d' %(idItem)
         self.DbConnector.deleteDataFromTable(query)
         self.form.fillItemsTable()            

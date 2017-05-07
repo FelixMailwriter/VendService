@@ -98,8 +98,8 @@ class MainWindow(QObject):
         self.window.ibl_ItemIcon.setPixmap(qpixmap)     
         
                 
-#------------------------------------------------------------
-# Items
+    #------------------------------------------------------------
+    # Items
     def _addItem(self):
         self.ItemsController.addItem()
         

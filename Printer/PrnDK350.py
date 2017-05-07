@@ -40,6 +40,10 @@ class Printer(QtCore.QThread):
         self.msleep(100)
         self._getAnswer()
         self.prn.close()
+        
+    def printZReportByNum(self, start, end):
+        self._openPort()         
+        self._sendCommand(0x49, '%d,%d' %(start, end))        
 
     def checkStatus(self):
         ready=True
@@ -131,7 +135,6 @@ class Printer(QtCore.QThread):
         try:
             conn = serial.Serial()
             conn.port = devPath
-        #if conn is None:
         except :
             raise PrinterHardwareException(u'Принтер не найден') 
                 

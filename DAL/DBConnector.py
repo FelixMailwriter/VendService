@@ -88,6 +88,9 @@ class DbConnector():
             if conn is not None: conn.close()
         return True
     
+    def getItems(self):
+        pass
+    
     def writeLog(self, logMessages):
         for logMessage in logMessages:
             priority=logMessage.priority
@@ -99,7 +102,7 @@ class DbConnector():
             self.insertDataToDB(query)  
     
     def getLog(self):
-        query='Select EventType, Source, EventDate, Event from Log Where Source like \'Printer\''
+        query='Select EventType, Source, EventDate, Event from Log'
         result=self.getDataFromDb(query, 'all')
         return result
     

@@ -19,6 +19,7 @@ class ReportController(QObject):
         #Прописываем события кнопок
         self.form.btn_XReport.clicked.connect(self._printXReport)
         self.form.btn_ZReport.clicked.connect(self._printZReport)
+        self.form.btn_ZReportByNum.clicked.connect(self._printZReportByNum)
         self.form.btn_PrnStatus.clicked.connect(self._getPrnStatus)
         self.form.btn_GetLog.clicked.connect(self._getLog)
         self.form.btn_ClearLog.clicked.connect(self._clearLog)
@@ -37,7 +38,18 @@ class ReportController(QObject):
         logMessages=self.printer.checkStatus()
         self.DbConnector.writeLog(logMessages)
         self.printer.printZReport()
-        
+    
+    def _printZReportByNum(self):
+        begin=self.form.spn_Begin.value()
+        end=self.form.spn_End.value()
+        if begin==0 or end==0:
+            return
+        if begin<=end:
+            self.printer.printZReportByNum(begin, end)
+        else:
+            self.message=Errors(u"Неправильный ввод")
+            self.message.window.setWindowTitle(u'Результат операции')
+            self.message.window.show()    
         
     def _getPrnStatus(self):
         try:
