@@ -31,7 +31,7 @@ class ItemsController(QObject):
         param["itemPrice"]="0"
         param["itemIcon"]=QtGui.QPixmap() 
         self.editWindow=EditItem.EditItemHandler(param, 'Add')
-        self.connect(self.editWindow, QtCore.SIGNAL('RefreshItemTable'), self.form.fillItemsTable)
+        self.connect(self.editWindow, QtCore.SIGNAL('RefreshItemTable'), self.form.setUpTables)
         self.editWindow.window.show()
             
     def _editItem(self):
@@ -46,7 +46,7 @@ class ItemsController(QObject):
         param["itemPrice"]=selectedRow[2].text()
         param["itemIcon"]=self.form.window.ibl_ItemIcon.pixmap()
         self.editWindow=EditItem.EditItemHandler(param, 'Edit')
-        self.connect(self.editWindow, QtCore.SIGNAL('RefreshItemTable'), self.form.fillItemsTable)
+        self.connect(self.editWindow, QtCore.SIGNAL('RefreshItemTable'), self.form.setUpTables)
         self.editWindow.window.show() 
         
     def _deleteItem(self):
@@ -99,6 +99,7 @@ class ItemsController(QObject):
     def _showMessage(self, header, message):
         self.message=Errors(message)
         self.message.window.setWindowTitle(header)
+        self.message.setParent(self)
         self.message.window.show() 
         
  

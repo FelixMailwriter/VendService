@@ -93,6 +93,23 @@ class DbConnector():
         result = self.getDataFromDb(query)
         return result
 
+    def addItem(self, itemName, itemPrice, ItemIcon, hidden):
+        query='''Insert into vending.Items (ItemName, ItemPrice, ItemIcon, hidden) values ('%s', %d, '%s', %d)''' %\
+                    (itemName, itemPrice, ItemIcon, hidden)
+        result=self.insertDataToDB(query)
+        return result
+
+    def editItem(self, itemName, itemPrice, ItemIcon, hidden, itemId):
+        query='''Update vending.Items SET ItemName='%s', ItemPrice=%d, ItemIcon='%s', hidden=%d WHERE idItem=%d''' %\
+                    (itemName, itemPrice, ItemIcon, hidden, itemId)
+        result=self.insertDataToDB(query)
+        return result 
+
+    def deleteItem(self, idItem):
+        query='Delete from vending.Items WHERE idItem=%d' %(idItem)
+        result=self.insertDataToDB(query)
+        return result
+
     def sellsOfItem(self, idItem):
         query='Select idSales, saleDate, saledItemId, price from Sales where saledItemId=%d' %(idItem)
         result=self.getDataFromDb(query, 'all')
@@ -103,10 +120,7 @@ class DbConnector():
         result=self.insertDataToDB(query)
         return result
         
-    def deleteItem(self, idItem):
-        query='Delete from vending.Items WHERE idItem=%d' %(idItem)
-        result=self.insertDataToDB(query)
-        return result
+
         
     def getIconById(self, idItem):
         query='SELECT ItemIcon from Items where idItem={}'.format(idItem)

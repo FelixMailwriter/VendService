@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 import os
-from PyQt4.Qt import QObject, QFileDialog, QMessageBox, QByteArray, QBuffer
+from PyQt4.Qt import QObject, QFileDialog, QByteArray, QBuffer
 from PyQt4 import QtCore, QtGui, uic
 import base64
 from Errors import Errors
@@ -41,19 +41,20 @@ class EditItemHandler(QObject):
         picbyte=base64.b64encode(itemIcon)
         if self._checkNameExists(self.itemName):
             return
-        query='''Insert into vending.Items (ItemName, ItemPrice, ItemIcon, hidden) values ('%s', %d, '%s', %d)''' %\
-                    (self.itemName, self.itemPrice*100, picbyte, 0)
-        result=self.DbConnector.insertDataToDB(query)#_writeToDB(query)    
+        result=self.DbConnector.addItem(self.itemName, self.itemPrice*100, picbyte, 0)    
         if result:
-            message=QMessageBox()
-            message.setText(u"Данные добавлены")
-            message.exec_()
+            message=u"Данные добавлены"
+            self._showMessage(u'Операция успешна', message)
                     
     def editItem (self, itemIcon):
         picbyte=base64.b64encode(itemIcon)
-        query='''Update vending.Items SET ItemName='%s', ItemPrice=%d, ItemIcon='%s', hidden=%d WHERE idItem=%d''' %\
-                    (self.itemName, self.itemPrice*100, picbyte, 0, self.itemId)
-        self.DbConnector.insertDataToDB(query) #self._writeToDB(query)
+        result=self.DbConnector.editItem(self.itemName, self.itemPrice*100, picbyte, 0, self.itemId)
+        if result:
+            message=u"Данные обновлены"
+            self._showMessage(u'Операция успешна', message)
+        else:
+            message=u"Ошибка обновления"
+            self._showMessage(u'Ошибка', message)                
 
     def loadIcon(self):
         file, fd=QFileDialog.getOpenFileNameAndFilter(parent=self.window, filter="Images *.jpg (*.jpg)")
@@ -68,18 +69,16 @@ class EditItemHandler(QObject):
             self.itemPrice=float(self.window.le_ItemPrice.text())
         except:
             flag=False
-            message=QMessageBox()
-            message.setText(u"В поле Цена не числовое значение")
-            message.exec_()
+            message=u"В поле Цена не числовое значение"
+            self._showMessage(u'Ошибка', message)
         self.window.btn_Save.setEnabled(flag)
              
     def _save(self):
         self.checkPrice
         self.itemName=self.window.le_ItemName.text()
         if self.itemName=="" or self.itemPrice==0 or self.itemIcon is None:
-            message=QMessageBox()
-            message.setText(u"Не все данные указаны")
-            message.exec_()
+            message=u"Не все данные указаны"
+            self._showMessage(u'Ошибка', message)
             self.window.btn_Save.setEnabled(False)
             return
         blobImg=QByteArray()
@@ -98,12 +97,15 @@ class EditItemHandler(QObject):
         query='Select idItem from Items where itemName like \'%s\'' %(itemName)
         result=self.DbConnector.getDataFromDb(query)
         if len(result)>0:
-            self.message=Errors(u"Предмет с таким именем существует")
-            self.message.setWindowTitle(u'Ошибка')
-            self.message.window.show()
+            message=u"Предмет с таким именем существует"
+            self._showMessage(u'Ошибка', message)
             return True
         return False             
-    
+ 
+    def _showMessage(self, header, message):
+        self.message=Errors(message)
+        self.message.window.setWindowTitle(header)
+        self.message.window.show()   
     
     
         

@@ -31,7 +31,7 @@ class MainWindow(QObject):
         self.MagazinesController=MagazinesController(self)
         self.ReportController=ReportController(self)
 
-        self.ItemsList=self.MagazinesController.getItemsList() #Список имеющихся предметов для выпадающего списка 
+        #self.ItemsList=[] #Список имеющихся предметов для выпадающего списка
       
         #Прописываем события кнопок для магазинов
         self.window.btn_AddMag.clicked.connect(self._addMagazin)
@@ -85,10 +85,11 @@ class MainWindow(QObject):
             self.ItemTable.setItem(counter,1,ItemName)
             self.ItemTable.setItem(counter,2,ItemPrice)
             counter+=1            
-            
+
     # Magazins
     
     def fillMagazinsTable(self):
+        ItemsList=self.MagazinesController.getItemsList() #Список имеющихся предметов для выпадающего списка
         rows=self.MagazinesController.getMagazinsItemsMap()
         if rows is None: return
         self.MagazinsTable.setItemDelegateForColumn(3, NonEditColumnDelegate())
@@ -99,7 +100,7 @@ class MainWindow(QObject):
             ItemIdMag.setTextAlignment(QtCore.Qt.AlignCenter)
             
             cmbx=QComboBox()
-            cmbx.addItems(self.ItemsList)
+            cmbx.addItems(ItemsList)
             name=str(row[1])
             index=cmbx.findText(name)
             cmbx.setCurrentIndex(index)

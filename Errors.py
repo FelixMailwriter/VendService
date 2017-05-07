@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 import os
+from PyQt4 import QtCore
 from PyQt4 import uic
 from PyQt4.Qt import QObject
 
@@ -10,6 +11,8 @@ class Errors(QObject):
         QObject.__init__(self)
         path=os.path.abspath("UI/UIForms/errorWindow.ui")
         self.window=uic.loadUi(path)
+        self.window.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.window.setWindowModality(QtCore.Qt.ApplicationModal)
         self.window.btn_close.clicked.connect(self.window.close)
         self.window.label.setText(messageText)
         
