@@ -26,21 +26,13 @@ class MainWindow(QObject):
         self.ItemTable=self.window.ItemTable
         self.MagazinsTable=self.window.tblw_Magazines
         
-        
-              
         # Создаем контроллеры
         self.ItemsController=ItemsController(self)
         self.MagazinesController=MagazinesController(self)
         self.ReportController=ReportController(self)
 
         self.ItemsList=self.MagazinesController.getItemsList() #Список имеющихся предметов для выпадающего списка 
-        
-        #Прописываем события кнопок для предметов        
-        self.window.btn_AddItem.clicked.connect(self._addItem)
-        self.window.btn_EditItem.clicked.connect(self._editItem)
-        self.window.btn_DeleteItem.clicked.connect(self._deleteItem)
-        self.window.ItemTable.cellClicked.connect(self._refreshIcon)
-        
+      
         #Прописываем события кнопок для магазинов
         self.window.btn_AddMag.clicked.connect(self._addMagazin)
         self.window.btn_DelMag.clicked.connect(self._delMagazin)
@@ -94,30 +86,6 @@ class MainWindow(QObject):
             self.ItemTable.setItem(counter,2,ItemPrice)
             counter+=1            
             
-    def setIcon(self, qpixmap):
-        self.window.ibl_ItemIcon.setPixmap(qpixmap)     
-        
-                
-    #------------------------------------------------------------
-    # Items
-    def _addItem(self):
-        self.ItemsController.addItem()
-        
-    def _editItem(self):
-        selectedRow=self.ItemTable.selectedItems()
-        self.ItemsController.editItem(selectedRow)       
-    
-    def _deleteItem(self):
-        selectedRow=self.ItemTable.selectedItems()
-        self.ItemsController.deleteItem(selectedRow)
-        
-    def _refreshIcon(self):
-        Items=self.ItemTable.selectedItems()
-        idItem=int(Items[0].text())
-        qpixmap=self.ItemsController.getIconById(idItem)
-        self.setIcon(qpixmap)
-
-    #--------------------------------------------------------------
     # Magazins
     
     def fillMagazinsTable(self):
