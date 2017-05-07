@@ -20,7 +20,7 @@ class MagazinesController(QObject):
         self.getItemsList()
         
     def getItemsList(self):
-        query='select ItemName from Items order by ItemName'
+        query='select ItemName from Items where hidden=0 order by ItemName'
         result=self.DbConnector.getDataFromDb(query)    
         listItems=QStringList()
         if result is None: return listItems

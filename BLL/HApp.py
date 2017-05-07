@@ -68,8 +68,8 @@ class MainWindow(QObject):
         self.MagazinsTable.verticalHeader().hide()
         self.fillMagazinsTable()
           
-    def fillItemsTable(self):#, rows):
-        rows=self.ItemsController.getItems()
+    def fillItemsTable(self):
+        rows=self.ItemsController.getItems(False)
         self.ItemTable.setRowCount(0)
         counter=0
         for row in rows:

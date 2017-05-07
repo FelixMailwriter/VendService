@@ -88,22 +88,37 @@ class DbConnector():
             if conn is not None: conn.close()
         return True
     
-    def getItems(self):
-        query='SELECT idItem, itemName, ItemPrice from Items'
+    def getItems(self, hidden):
+        query='SELECT idItem, itemName, ItemPrice from Items where hidden=%d' %(hidden)
         result = self.getDataFromDb(query)
         return result
 
+    def sellsOfItem(self, idItem):
+        query='Select idSales, saleDate, saledItemId, price from Sales where saledItemId=%d' %(idItem)
+        result=self.getDataFromDb(query, 'all')
+        return result
+
+    def setItemHide(self, idItem, isHidden):
+        query='Update vending.Items SET hidden=%d WHERE idItem=%d' %(isHidden, idItem)
+        result=self.insertDataToDB(query)
+        return result
+        
+    def deleteItem(self, idItem):
+        query='Delete from vending.Items WHERE idItem=%d' %(idItem)
+        result=self.insertDataToDB(query)
+        return result
+        
     def getIconById(self, idItem):
         query='SELECT ItemIcon from Items where idItem={}'.format(idItem)
         result=self.getDataFromDb(query, 'one')
         return result
             
     def getMagazinesContainItem(self, idItem):
+        magList=''
         query= ('select idMagazins, ItemQty, itemId from Magazins'+
         ' where Magazins.ItemId=%d') %(idItem)
         result=self.getDataFromDb(query)
         if len(result)!=0:
-            magList=''
             for magazine in result:
                 magList+=str(magazine[0])+', '
             magList=magList[:-2]
@@ -126,7 +141,7 @@ class DbConnector():
     
     def clearLog(self, source):
         query='Delete from Log where Source like \'%s\'' %(source)
-        self.deleteDataFromTable(query)
+        self.insertDataToDB(query)
     
     def _showError(self, header, message): 
         self.message=Errors(message)
