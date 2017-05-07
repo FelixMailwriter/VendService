@@ -27,7 +27,7 @@ class Printer(QtCore.QThread):
     def printXReport(self): 
          #Информация о накоплениях за день
         #Открываем порт
-        self.prn.open()         
+        self._openPort()         
         self._sendCommand(0x78, 'K,1')
         self.msleep(100)
         self._getAnswer()
@@ -35,7 +35,7 @@ class Printer(QtCore.QThread):
         
     def printZReport(self):
         #Открываем порт
-        self.prn.open()         
+        self._openPort()         
         self._sendCommand(0x78, 'K,3')
         self.msleep(100)
         self._getAnswer()
@@ -88,7 +88,7 @@ class Printer(QtCore.QThread):
                     
     def _getStatusBytes(self):
         status=[]
-        self.prn.open()         
+        self._openPort()               
         self._sendCommand(0x4A, '')
         self.msleep(100)
         answer=self._getAnswer()
@@ -128,9 +128,11 @@ class Printer(QtCore.QThread):
         return prn_config
 
     def _getConnection(self, devPath):
-        conn = serial.Serial()
-        conn.port = devPath
-        if conn is None:
+        try:
+            conn = serial.Serial()
+            conn.port = devPath
+        #if conn is None:
+        except :
             raise PrinterHardwareException(u'Принтер не найден') 
                 
         conn.baudrate = 115200
@@ -143,9 +145,15 @@ class Printer(QtCore.QThread):
         conn.dsrdtr = True                  #disable hardware (DSR/DTR) flow control
         return conn
     
+    def _openPort(self):
+        try:
+            self.prn.open()
+        except :
+            raise PrinterHardwareException(u'Принтер не найден')
+        
     def _printCheck(self):
         #Открываем порт
-        self.prn.open()
+        self._openPort() 
         if self.checkType=='Fisk':
             self._printFiskCheck()
         elif self.checkType=='NotFisk':
