@@ -50,7 +50,7 @@ class MainWindow(QObject):
         self.window.btn_minus.clicked.connect(self._minusQty)
         
         #Подписываемся на событие "Принтер не найден"
-        self.connect(self.MagazinesController, QtCore.SIGNAL("Printer is not found"), self._prnIsNotFound)
+        self.connect(self.MagazinesController, QtCore.SIGNAL("Printer is not ready"), self._prnIsNotFound)
  
         self.setUpTables()
         
@@ -272,15 +272,10 @@ class MainWindow(QObject):
         else:
             return qty
      
-    #--------------------------------------------------------------
-    # Reports
-    
-    def printZReport(self):
-        pass
     
     
-    def _prnIsNotFound(self):
-        self.message=Errors(u"Принтер не найден")
+    def _prnIsNotFound(self, message):
+        self.message=Errors(message)
         self.message.window.setWindowTitle(u'Ошибка')
         self.message.window.show()
                    

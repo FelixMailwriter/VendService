@@ -103,6 +103,10 @@ class DbConnector():
         result=self.getDataFromDb(query, 'all')
         return result
     
+    def clearLog(self, source):
+        query='Delete from Log where Source like \'%s\'' %(source)
+        self.deleteDataFromTable(query)
+    
     def _showError(self, header, message): 
         self.message=Errors(message)
         self.message.window.setWindowTitle(header)

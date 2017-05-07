@@ -30,7 +30,7 @@
           <locale language="Russian" country="RussianFederation"/>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="documentMode">
           <bool>false</bool>
@@ -535,7 +535,7 @@
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="widget">
           <attribute name="title">
            <string>Отчеты</string>
           </attribute>

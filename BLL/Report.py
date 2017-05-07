@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+from PyQt4 import QtCore
 from PyQt4 import QtGui
 from PyQt4.Qt import QObject, QHeaderView
 from DAL.DBConnector import DbConnector
@@ -17,15 +18,26 @@ class ReportController(QObject):
         
         #Прописываем события кнопок
         self.form.btn_XReport.clicked.connect(self._printXReport)
+        self.form.btn_ZReport.clicked.connect(self._printZReport)
         self.form.btn_PrnStatus.clicked.connect(self._getPrnStatus)
         self.form.btn_GetLog.clicked.connect(self._getLog)
         self.form.btn_ClearLog.clicked.connect(self._clearLog)
+        
+        self._getPrnStatus()
 
     def _printXReport(self):
-        self.printer.printXReport()
-        
-    def printZReport(self):
+        try:
+            logMessages=self.printer.checkStatus()
+            self.DbConnector.writeLog(logMessages)
+            self.printer.printXReport()
+        except Printer.PrinterHardwareException as e:
+            self.emit(QtCore.SIGNAL('Printer is not ready'), e.value)
+            
+    def _printZReport(self):
+        logMessages=self.printer.checkStatus()
+        self.DbConnector.writeLog(logMessages)
         self.printer.printZReport()
+        
         
     def _getPrnStatus(self):
         try:
@@ -41,7 +53,7 @@ class ReportController(QObject):
             self.message.window.show()            
 
     def _getLog(self):
-        self._clearLog()
+        self.form.tbw_Log.setRowCount(0)
         result=self.DbConnector.getLog()
         if len(result)==0:
             return
@@ -54,7 +66,7 @@ class ReportController(QObject):
             ItemEventType=QtGui.QTableWidgetItem(str(row[0]))
             ItemSource=QtGui.QTableWidgetItem(str(row[1]))
             ItemEventDate=QtGui.QTableWidgetItem(str(row[2]))
-            ItemEvent=QtGui.QTableWidgetItem(str(row[3]))
+            ItemEvent=QtGui.QTableWidgetItem(row[3])
             
             self.form.tbw_Log.insertRow(counter)
             self.form.tbw_Log.setItem(counter,0,ItemEventType)
@@ -64,6 +76,7 @@ class ReportController(QObject):
             
     def _clearLog(self):
         self.form.tbw_Log.setRowCount(0)
+        self.DbConnector.clearLog('Printer')
         
         
             

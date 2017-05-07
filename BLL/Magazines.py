@@ -289,7 +289,7 @@ class MagazinesController(QObject):
             self.DbConnector.writeLog(logMessages)
             printer.run(context, checkType)
         except Printer.PrinterHardwareException as e:
-            self.emit(QtCore.SIGNAL('Printer is not found'))
+            self.emit(QtCore.SIGNAL('Printer is not ready'), e.value)
 
     
     

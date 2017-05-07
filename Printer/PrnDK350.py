@@ -28,7 +28,7 @@ class Printer(QtCore.QThread):
          #Информация о накоплениях за день
         #Открываем порт
         self.prn.open()         
-        self._sendCommand(0x69, '')
+        self._sendCommand(0x78, 'K,1')
         self.msleep(100)
         self._getAnswer()
         self.prn.close()
@@ -36,49 +36,54 @@ class Printer(QtCore.QThread):
     def printZReport(self):
         #Открываем порт
         self.prn.open()         
-        self._sendCommand(0x78, 'K3')
+        self._sendCommand(0x78, 'K,3')
         self.msleep(100)
         self._getAnswer()
         self.prn.close()
 
     def checkStatus(self):
         ready=True
+        errormsg=''
         logList=[]       
         statusBytes=self._getStatusBytes()
 
         if statusBytes[0][2]=='1':
-            log=LogEvent('Warning', 'Printer', 'Clock is not set')
+            log=LogEvent('Warning', 'Printer', u'Часы принтера не установлены')
             logList.append(log)
         if statusBytes[1][5]=='1':
-            log=LogEvent('Info', 'Printer', 'Paper\'s lock is opened')
-            logList.append(log)            
+            log=LogEvent('Info', 'Printer', u'Замок бумаги открыт')
+            logList.append(log) 
+            ready=False 
+            errormsg+=u'Замок бумаги открыт. '          
         if statusBytes[2][1]=='1':
-            log=LogEvent('Warning', 'Printer', 'Paper is few')
+            log=LogEvent('Warning', 'Printer', u'Мало бумаги')
             logList.append(log)            
         elif statusBytes[2][0]=='1':
-            log=LogEvent('Critical', 'Printer', 'Paper is finished')
-            logList.append(log)            
+            log=LogEvent('Critical', 'Printer', u'Бумага окончилась')
+            logList.append(log)
+            ready=False
+            errormsg+=u'Бумага закончилась. '              
         if statusBytes[4][4]=='1':
-            log=LogEvent('Critical', 'Printer', 'Fiscal memory is full')
+            log=LogEvent('Critical', 'Printer', u'Фискальная память заполнена')
             logList.append(log)
         elif statusBytes[4][3]=='1':
-            log=LogEvent('Warning', 'Printer', 'Fiscal memory is fewer than 50 free records')
+            log=LogEvent('Warning', 'Printer', u'В фискальной памяти осталось менее 50 записей')
             logList.append(log)
         elif statusBytes[2][6]=='1':
-            log=LogEvent('Warning', 'Printer', 'Fiscal memory is fewer than 2000 byte')
+            log=LogEvent('Warning', 'Printer', u'В фискальной памяти осталось менее 2000 байт')
             logList.append(log)
         elif statusBytes[2][4]=='1':
-            log=LogEvent('Warning', 'Printer', 'Fiscal memory is fewer than 3000 byte')
+            log=LogEvent('Warning', 'Printer', u'В фискальной памяти осталось менее 3000 байт')
             logList.append(log)
         elif statusBytes[2][2]=='1':
-            log=LogEvent('Warning', 'Printer', 'Fiscal memory is fewer than 4000 byte')
+            log=LogEvent('Warning', 'Printer', u'В фискальной памяти осталось менее 4000 байт')
             logList.append(log)
         if statusBytes[5][0]=='1':
-            log=LogEvent('Critical', 'Printer', 'Fiscal memory is set in READONLY mode')
+            log=LogEvent('Critical', 'Printer', u'Фискальная память в режиме ТОЛЬКО_ЧТЕНИЕ')
             logList.append(log)
         
         if not ready:
-            raise PrinterHardwareException(u"Принтер не готов")
+            raise PrinterHardwareException(u"Принтер не готов. "+errormsg)
         return logList            
                     
     def _getStatusBytes(self):
@@ -126,7 +131,7 @@ class Printer(QtCore.QThread):
         conn = serial.Serial()
         conn.port = devPath
         if conn is None:
-            raise PrinterHardwareException('Device not found') 
+            raise PrinterHardwareException(u'Принтер не найден') 
                 
         conn.baudrate = 115200
         conn.bytesize = serial.EIGHTBITS    #number of bits per bytes
