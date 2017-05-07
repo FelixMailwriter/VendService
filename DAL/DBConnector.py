@@ -89,7 +89,25 @@ class DbConnector():
         return True
     
     def getItems(self):
-        pass
+        query='SELECT idItem, itemName, ItemPrice from Items'
+        result = self.getDataFromDb(query)
+        return result
+
+    def getIconById(self, idItem):
+        query='SELECT ItemIcon from Items where idItem={}'.format(idItem)
+        result=self.getDataFromDb(query, 'one')
+        return result
+            
+    def getMagazinesContainItem(self, idItem):
+        query= ('select idMagazins, ItemQty, itemId from Magazins'+
+        ' where Magazins.ItemId=%d') %(idItem)
+        result=self.getDataFromDb(query)
+        if len(result)!=0:
+            magList=''
+            for magazine in result:
+                magList+=str(magazine[0])+', '
+            magList=magList[:-2]
+        return magList
     
     def writeLog(self, logMessages):
         for logMessage in logMessages:
