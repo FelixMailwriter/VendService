@@ -25,13 +25,16 @@ class MainWindow(QObject):
         self.window=uic.loadUi(path)
         self.ItemTable=self.window.ItemTable
         self.MagazinsTable=self.window.tblw_Magazines
-         
+        
+        
               
         # Создаем контроллеры
         self.ItemsController=ItemsController(self)
         self.MagazinesController=MagazinesController(self)
         self.ReportController=ReportController(self)
 
+        self.ItemsList=self.MagazinesController.getItemsList() #Список имеющихся предметов для выпадающего списка 
+        
         #Прописываем события кнопок для предметов        
         self.window.btn_AddItem.clicked.connect(self._addItem)
         self.window.btn_EditItem.clicked.connect(self._editItem)
@@ -46,17 +49,9 @@ class MainWindow(QObject):
         self.window.btn_plus.clicked.connect(self._plusQty)
         self.window.btn_minus.clicked.connect(self._minusQty)
         
-        #Прописываем события кнопок для отчетов
-        #self.window.btn_zReport.clicked.connect(self.ReportController.printZReport)
-        #self.window.btn_xReport.clicked.connect(self.ReportController.printXReport)
-        
-        #self.window.bts_getPrinterStatus.clicked.connect(self.ReportController.checkStatus)
-        
         #Подписываемся на событие "Принтер не найден"
         self.connect(self.MagazinesController, QtCore.SIGNAL("Printer is not found"), self._prnIsNotFound)
-       
-        self.ItemsList=self.MagazinesController.getItemsList() #Список имеющихся предметов для выпадающего списка
-        
+ 
         self.setUpTables()
         
     def setUpTables(self):

@@ -264,8 +264,7 @@ class Printer(QtCore.QThread):
                 self.showRecevedData(data)
                 return data
             self.msleep(1000)
- 
-            
+          
     def showRecevedData(self, data):
         #распечатка данных от принтера
         print '---------------'
@@ -276,14 +275,12 @@ class Printer(QtCore.QThread):
         print s 
         print '---------------'        
             
-   
     def _byte2bits(self,hex_string):
         n = len(hex_string)
         p= binascii.unhexlify(hex_string.zfill(n + (n & 1)))   
         a=bin(int(binascii.hexlify(p), 16))
         return a
         
-
 class PrinterHardwareException(Exception):
     def __init__(self,value):
         self.value=value

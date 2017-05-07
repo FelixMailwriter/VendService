@@ -38,22 +38,6 @@ class DbConnector():
         else:
             self._showError(u'Ошибка', u'Ошибка файла конфигурации БД. Отсутствует секция.')
         return config
-    '''
-    def getDataFromDb(self, query):
-        conn = cur = None
-        try:
-            conn=self.getConnection()
-            cur=conn.cursor()
-            cur.execute(query)
-            result = cur.fetchall()            
-            return result
-        except:
-            self._showError(u'Ошибка', u'Ошибка подключения к базе данных')
-            
-        finally:
-            if cur is not None: cur.close()
-            if conn is not None: conn.close()
-    '''
     
     def getDataFromDb(self, query, type='all'):
         conn = cur = None
@@ -113,6 +97,11 @@ class DbConnector():
                 ' values (\'%s\', \'%s\', \'%s\', \'%s\')' \
                 %(priority, source, str(datetime.now()), event)
             self.insertDataToDB(query)  
+    
+    def getLog(self):
+        query='Select EventType, Source, EventDate, Event from Log Where Source like \'Printer\''
+        result=self.getDataFromDb(query, 'all')
+        return result
     
     def _showError(self, header, message): 
         self.message=Errors(message)
