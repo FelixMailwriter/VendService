@@ -112,7 +112,6 @@ class ItemsController(QObject):
         self._fillItemsTable()
         self.ItemDeleted.emit()
               
-
     def _refreshIcon(self):
         Items=self.form.window.ItemTable.selectedItems()
         idItem=int(Items[0].text())
