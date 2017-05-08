@@ -120,7 +120,10 @@ class DbConnector():
         result=self.insertDataToDB(query)
         return result
         
-
+    def getIdItemByName(self, itemName):
+        query='Select idItem from Items where itemName like \'%s\'' %(itemName)
+        result=self.getDataFromDb(query, 'all')
+        return result
         
     def getIconById(self, idItem):
         query='SELECT ItemIcon from Items where idItem={}'.format(idItem)

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
-from PyQt4 import QtCore
-from PyQt4.Qt import QObject, QStringList
+from PyQt4 import QtCore, QtGui
+from PyQt4.Qt import QObject, QStringList, QComboBox, QFont, QHeaderView, QItemDelegate
 from DAL.DBConnector import DbConnector
 import datetime
 from Errors import Errors
@@ -17,9 +17,181 @@ class MagazinesController(QObject):
         self.DbConnector=DbConnector()
         self.form=form
         self.MagazinsTable=self.form.window.tblw_Magazines
-        self.getItemsList()
+        #Прописываем события кнопок для магазинов
+        self.form.window.btn_AddMag.clicked.connect(self._addMagazin)
+        self.form.window.btn_DelMag.clicked.connect(self._delMagazin)
+        self.form.window.btn_MagSave.clicked.connect(self._saveMagazins)
+        self.form.window.tblw_Magazines.cellClicked.connect(self._magTableCellClicked)
+        self.form.window.btn_plus.clicked.connect(self._plusQty)
+        self.form.window.btn_minus.clicked.connect(self._minusQty)
+
+    def setUpMagazinsTable(self):
+        rowsFont=QFont('Lucida',12, QtGui.QFont.Bold)
+        self.MagazinsTable.setFont(rowsFont)
+        headerFont=QFont('Lucida',12, QtGui.QFont.Bold)
+        self.MagazinsTable.horizontalHeader().setFont(headerFont) 
+        self.MagazinsTable.horizontalHeader().setResizeMode(0,QHeaderView.ResizeToContents)
+        self.MagazinsTable.horizontalHeader().setResizeMode(1,QHeaderView.Stretch)
+        self.MagazinsTable.horizontalHeader().setResizeMode(2,QHeaderView.Stretch)
+        self.MagazinsTable.horizontalHeader().setResizeMode(3,QHeaderView.Stretch)
+        self.MagazinsTable.verticalHeader().hide()
+        self._fillMagazinsTable()
         
-    def getItemsList(self):
+    @QtCore.pyqtSlot(name="fillMagazinsTable")
+    def _fillMagazinsTable(self):
+        ItemsList=self._getItemsList() #Список имеющихся предметов для выпадающего списка
+        rows=self._getMagazinsItemsMap()
+        if rows is None: return
+        self.MagazinsTable.setItemDelegateForColumn(3, NonEditColumnDelegate())
+        self.MagazinsTable.setRowCount(0)
+        counter=0
+        for row in rows:
+            ItemIdMag=QtGui.QTableWidgetItem(str(str(row[0])))
+            ItemIdMag.setTextAlignment(QtCore.Qt.AlignCenter)
+            
+            cmbx=QComboBox()
+            cmbx.addItems(ItemsList)
+            name=str(row[1])
+            index=cmbx.findText(name)
+            cmbx.setCurrentIndex(index)
+            ItemItemQty=QtGui.QTableWidgetItem(str(row[2]))
+            ItemItemQty.setTextAlignment(QtCore.Qt.AlignCenter)
+            ItemIdItem=QtGui.QTableWidgetItem(str(row[3]))
+            ItemIdItem.setTextAlignment(QtCore.Qt.AlignCenter)
+
+            self.MagazinsTable.insertRow(counter)
+            self.MagazinsTable.setItem(counter,0,ItemIdMag)
+            self.MagazinsTable.setCellWidget(counter,1,cmbx)
+            self.MagazinsTable.setItem(counter,2,ItemItemQty)
+            self.MagazinsTable.setItem(counter,3,ItemIdItem)
+            counter+=1 
+            
+    def _addMagazin(self):
+        rowCount=self.MagazinsTable.rowCount()
+        self.MagazinsTable.insertRow(rowCount)
+
+        ItemItemQty=QtGui.QTableWidgetItem()
+        ItemItemQty.setTextAlignment(QtCore.Qt.AlignCenter)
+        self.MagazinsTable.setItem(rowCount,0,ItemItemQty)        
+        
+        cmbx=QComboBox()
+        cmbx.addItems(self.ItemsList)
+        cmbx.setCurrentIndex(-1)        
+        self.MagazinsTable.setCellWidget(rowCount,1,cmbx)
+        
+        ItemItemQty=QtGui.QTableWidgetItem('0')
+        ItemItemQty.setTextAlignment(QtCore.Qt.AlignCenter)
+        self.MagazinsTable.setItem(rowCount,2,ItemItemQty)
+        
+    def _delMagazin(self):
+        currentRow=self.MagazinsTable.currentRow()
+        self.MagazinsTable.removeRow(currentRow)            
+
+    def _saveMagazins(self):
+        MagazinsMappingList=[]
+        for i in range (0, self.MagazinsTable.rowCount()):
+            row=[]
+            for j in range (0, self.MagazinsTable.columnCount()):
+                wgt=self.MagazinsTable.cellWidget(i,j)
+                itemType=type(wgt)
+                if str(itemType)=='<class \'PyQt4.QtGui.QComboBox\'>':
+                    value=wgt.currentText()
+                elif str(itemType)=='<type \'NoneType\'>': 
+                    try:
+                        value=self.MagazinsTable.item(i,j).text()
+                    except:
+                        value=0
+                row.append(value)
+            MagazinsMappingList.append(row)
+            
+        if self._checkCorrectMagazineTable(MagazinsMappingList): 
+            return
+
+        self.MagazinesController._saveMagazinsMapping(MagazinsMappingList)
+          
+            
+    def _checkCorrectMagazineTable(self, MagazinsMappingList):
+        for i in range (0, len(MagazinsMappingList)):
+            magazine=MagazinsMappingList[i]
+            #Проверка заполнения номера магазина
+            if magazine[0]==0:
+                self.message=Errors(u'Не указан номер магазина')
+                self.message.window.setWindowTitle(u'Ошибка')
+                self.message.window.show()
+                return True
+            #Проверка числового значения в номере магазина
+            if self._isNotNumber(magazine[0]):
+                self.message=Errors(u'В поле номера магазина не числовое значение')
+                self.message.window.setWindowTitle(u'Ошибка')
+                self.message.window.show()
+                return True
+            #Проверка заполнения поля Количество
+            if magazine[2]=='0':
+                self.message=Errors(u'Не заполнено поле "Количество"')
+                self.message.window.setWindowTitle(u'Ошибка')
+                self.message.window.show()
+                return True
+            #Проверка числового значения в поле Количество
+            if self._isNotNumber(magazine[2]):
+                self.message=Errors(u'В поле "Количество" не числовое значение')
+                self.message.window.setWindowTitle(u'Ошибка')
+                self.message.window.show() 
+                return True                          
+            #Проверка уникальности номера магазина
+            for j in range (i+1, len(MagazinsMappingList)):
+                if magazine[0]==MagazinsMappingList[j][0]:
+                    self.message=Errors(u'Дублируются номера магазинов')
+                    self.message.window.setWindowTitle(u'Ошибка')
+                    self.message.window.show()
+                    return True
+        return False    
+           
+    def _isNotNumber(self, value):
+        try:
+            num= (int)(value)
+        except:return True
+        else: return False
+            
+    def _magTableCellClicked(self, row, column):
+        item=self.MagazinsTable.item(row, 0)
+        if item is None: return
+        magNum=item.text()        
+        self.window.llbl_magNumber.setText(magNum) 
+    
+    def _plusQty(self):
+        qty=self._getQtyToChange()
+        row=self.MagazinsTable.currentRow()
+        if row == -1: return
+        oldValue=int(self.MagazinsTable.item(row, 2).text())
+        newValue=oldValue+qty
+        self.MagazinsTable.item(row,2).setText(str(newValue))
+
+    def _minusQty(self):
+        qty=self._getQtyToChange()
+        row=self.MagazinsTable.currentRow()
+        if row == -1: return
+        oldValue=int(self.MagazinsTable.item(row, 2).text())
+        newValue=oldValue-qty
+        if newValue<=0:
+            self.message=Errors(u'Удаляемое количество предметов больше имеющегося')
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show()
+            return            
+        self.MagazinsTable.item(row,2).setText(str(newValue))         
+    
+    def _getQtyToChange(self):
+        value=self.window.le_qty.text()
+        try:
+            qty=(int)(value)
+        except:
+            self.message=Errors(u'В поле "Количество" не числовое значение')
+            self.message.window.setWindowTitle(u'Ошибка')
+            self.message.window.show() 
+            return 0                        
+        else:
+            return qty
+                
+    def _getItemsList(self):
         query='select ItemName from Items where hidden=0 order by ItemName'
         result=self.DbConnector.getDataFromDb(query)    
         listItems=QStringList()
@@ -28,13 +200,13 @@ class MagazinesController(QObject):
             listItems.append(element[0])                 
         return listItems    
 
-    def getMagazinsItemsMap(self):
+    def _getMagazinsItemsMap(self):
         query= ('select idMagazins, itemName, ItemQty, Items.idItem from Magazins,'+
         ' Items where Magazins.ItemId=Items.idItem')
         result=self.DbConnector.getDataFromDb(query)
         return result
                
-    def saveMagazinsMapping(self, magazinesMap):
+    def _saveMagazinsMapping(self, magazinesMap):
         #Дописываем в таблицу предметов их id
         self._addIdToMagazinesMap(magazinesMap)
         #Записываем в БД приход/расход предметов
@@ -292,7 +464,9 @@ class MagazinesController(QObject):
             self.emit(QtCore.SIGNAL('Printer is not ready'), e.value)
 
     
-    
+class NonEditColumnDelegate(QItemDelegate):
+    def createEditor(self, parent, options, index):
+        return None
     
                   
         

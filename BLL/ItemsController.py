@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.Qt import QObject
+from PyQt4.Qt import QObject, QFont, QHeaderView
 import base64
 from DAL.DBConnector import DbConnector
 import EditItem
@@ -9,11 +9,14 @@ from Errors import Errors
 
 class ItemsController(QObject):
     
+    ItemDeleted=QtCore.pyqtSignal()
+    
     def __init__(self, form):
         QObject.__init__(self)
         self.DbConnector=DbConnector()
         self.form=form
         self.editWindow=None
+        self.ItemTable=self.form.window.ItemTable
 
         #Прописываем события кнопок для предметов        
         self.form.window.btn_AddItem.clicked.connect(self._addItem)
@@ -21,7 +24,37 @@ class ItemsController(QObject):
         self.form.window.btn_DeleteItem.clicked.connect(self._deleteItem)
         self.form.window.ItemTable.cellClicked.connect(self._refreshIcon)
     
-    def getItems(self, hidden):
+    def setUpItemsTable(self):
+        rowsFont=QFont('Lucida',12, QtGui.QFont.Bold)
+        self.ItemTable.setFont(rowsFont)
+        headerFont=QFont('Lucida',12, QtGui.QFont.Bold)
+        self.ItemTable.setFont(rowsFont)
+        self.ItemTable.horizontalHeader().setFont(headerFont) 
+        self.ItemTable.horizontalHeader().setResizeMode(0,QHeaderView.ResizeToContents)
+        self.ItemTable.horizontalHeader().setResizeMode(1,QHeaderView.Stretch)
+        self.ItemTable.horizontalHeader().setResizeMode(2,QHeaderView.Stretch)
+        self.ItemTable.verticalHeader().hide()
+        self._fillItemsTable()
+        
+    def _fillItemsTable(self):
+        rows=self._getItems(False)
+        self.ItemTable.setRowCount(0)
+        counter=0
+        for row in rows:
+            ItemIdItem=QtGui.QTableWidgetItem(str(row[0]))
+            ItemIdItem.setTextAlignment(QtCore.Qt.AlignCenter)
+            ItemName=QtGui.QTableWidgetItem(row[1])
+            ItemName.setTextAlignment(QtCore.Qt.AlignCenter)
+            ItemPrice=QtGui.QTableWidgetItem(str(row[2]/100.0))
+            ItemPrice.setTextAlignment(QtCore.Qt.AlignCenter)
+            
+            self.ItemTable.insertRow(counter)
+            self.ItemTable.setItem(counter,0,ItemIdItem)
+            self.ItemTable.setItem(counter,1,ItemName)
+            self.ItemTable.setItem(counter,2,ItemPrice)
+            counter+=1 
+    
+    def _getItems(self, hidden):
         return self.DbConnector.getItems(hidden)
 
     def _addItem(self):
@@ -76,14 +109,15 @@ class ItemsController(QObject):
             if result:
                 message=u'Предмет удален.'
                 self._showMessage(u'Операция успешна', message)
-        self.form.fillItemsTable()
+        self._fillItemsTable()
+        self.ItemDeleted.emit()
               
 
     def _refreshIcon(self):
         Items=self.form.window.ItemTable.selectedItems()
         idItem=int(Items[0].text())
         qpixmap=self._getIconById(idItem)
-        self.setIcon(qpixmap)
+        self._setIcon(qpixmap)
                                        
     def _getIconById(self, idItem):
         result=self.DbConnector.getIconById(idItem)[0]
@@ -93,7 +127,7 @@ class ItemsController(QObject):
             qpixmap.loadFromData(picBytes)
         return qpixmap
     
-    def setIcon(self, qpixmap):
+    def _setIcon(self, qpixmap):
         self.form.window.ibl_ItemIcon.setPixmap(qpixmap)
   
     def _showMessage(self, header, message):
