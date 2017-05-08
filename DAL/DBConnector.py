@@ -120,16 +120,61 @@ class DbConnector():
         result=self.insertDataToDB(query)
         return result
         
-    def getIdItemByName(self, itemName):
-        query='Select idItem from Items where itemName like \'%s\'' %(itemName)
+    def getIdItemByName(self, itemName, hidden):
+        query='Select idItem from Items where itemName like \'%s\' and hidden=%d' %(itemName, hidden)
         result=self.getDataFromDb(query, 'all')
         return result
-        
+
+    def addMagazin(self, idMagazins, ItemId, ItemQTY):
+        query='Insert into Magazins (idMagazins, ItemId, ItemQTY) values (%d, %d, %d)' %\
+            (idMagazins, ItemId, ItemQTY)
+        result=self.insertDataToDB(query)
+        return result
+    
+    def dropMagazinesTable(self):
+        query='Delete from Magazins'
+        result= self.deleteDataFromTable(query)
+        return result
+                
     def getIconById(self, idItem):
         query='SELECT ItemIcon from Items where idItem={}'.format(idItem)
         result=self.getDataFromDb(query, 'one')
         return result
-            
+
+    def getMagazinsItemsMap(self):
+        query= ('select idMagazins, itemName, ItemQty, Items.idItem from Magazins,'+
+        ' Items where Magazins.ItemId=Items.idItem')
+        result=self.getDataFromDb(query)
+        return result
+     
+    def getQtyOfItemsByType(self):
+        query='Select Magazins.ItemId, sum(Magazins.ItemQTY), Items.ItemName from Magazins, Items ' +\
+                'where Magazins.ItemId=Items.idItem ' +\
+                'group by ItemId '+\
+                'order by Items.itemName'
+        result=self.getDataFromDb(query, 'all')
+        return result
+    
+    def getMaxMovementId(self):
+        query='Select max(IdMovement) from ItemsMovements'
+        result=self.getDataFromDb(query, 'one')
+        return result
+    
+    def addMovement(self, idRecharge, idItem, date, OperationType, itemQty):
+        query='Insert into ItemsMovements (IdMovement, idItem, OperationDate, OperationType, qty) '+\
+                'VALUES (%d, %d, \'%s\', \'%s\', %d)' %(idRecharge, idItem, date, OperationType, itemQty)
+        result=self.insertDataToDB(query)
+        return result
+        
+    def getMovements(self):
+        query='select IM.IdMovement, Items.itemName, IM.OperationDate, IM.OperationType, '+\
+                'IM.qty from ItemsMovements as IM, Items '+\
+                'where IM.IdMovement=(select max(IdMovement) from ItemsMovements) '+\
+                'and IM.idItem=Items.idItem '+\
+                'order by Items.itemName'
+        result=self.getDataFromDb(query, 'all')
+        return result
+                       
     def getMagazinesContainItem(self, idItem):
         magList=''
         query= ('select idMagazins, ItemQty, itemId from Magazins'+
@@ -141,6 +186,12 @@ class DbConnector():
             magList=magList[:-2]
         return magList
     
+    def getMagazinLoadTable(self):
+        query='select M.idMagazins, I.ItemName, M.ItemQTY from Magazins as M, Items as I '+\
+                'where M.ItemId=I.idItem'
+        result=self.getDataFromDb(query)
+        return result
+        
     def writeLog(self, logMessages):
         for logMessage in logMessages:
             priority=logMessage.priority

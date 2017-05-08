@@ -30,7 +30,7 @@
           <locale language="Russian" country="RussianFederation"/>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <property name="documentMode">
           <bool>false</bool>
@@ -250,7 +250,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLabel" name="llbl_magNumber">
+                <widget class="QLabel" name="lbl_magNumber">
                  <property name="font">
                   <font>
                    <pointsize>12</pointsize>

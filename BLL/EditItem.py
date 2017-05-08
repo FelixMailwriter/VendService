@@ -94,7 +94,7 @@ class EditItemHandler(QObject):
         self.emit(QtCore.SIGNAL("RefreshItemTable"))
     
     def _checkNameExists(self, itemName):
-        result=self.DbConnector.getIdItemByName(itemName)
+        result=self.DbConnector.getIdItemByName(itemName, False)
         if len(result)>0:
             message=u"Предмет с таким именем существует"
             self._showMessage(u'Ошибка', message)

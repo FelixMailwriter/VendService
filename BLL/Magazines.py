@@ -16,6 +16,7 @@ class MagazinesController(QObject):
         QObject.__init__(self)
         self.DbConnector=DbConnector()
         self.form=form
+        self.ItemsList=self._getItemsList() #Список имеющихся предметов для выпадающего списка
         self.MagazinsTable=self.form.window.tblw_Magazines
         #Прописываем события кнопок для магазинов
         self.form.window.btn_AddMag.clicked.connect(self._addMagazin)
@@ -39,9 +40,10 @@ class MagazinesController(QObject):
         
     @QtCore.pyqtSlot(name="fillMagazinsTable")
     def _fillMagazinsTable(self):
-        ItemsList=self._getItemsList() #Список имеющихся предметов для выпадающего списка
-        rows=self._getMagazinsItemsMap()
-        if rows is None: return
+        self.ItemsList=self._getItemsList() #Список имеющихся предметов для выпадающего списка
+        rows=self.DbConnector.getMagazinsItemsMap()
+        if rows is None or len(rows)==0: 
+            return
         self.MagazinsTable.setItemDelegateForColumn(3, NonEditColumnDelegate())
         self.MagazinsTable.setRowCount(0)
         counter=0
@@ -50,7 +52,7 @@ class MagazinesController(QObject):
             ItemIdMag.setTextAlignment(QtCore.Qt.AlignCenter)
             
             cmbx=QComboBox()
-            cmbx.addItems(ItemsList)
+            cmbx.addItems(self.ItemsList)
             name=str(row[1])
             index=cmbx.findText(name)
             cmbx.setCurrentIndex(index)
@@ -65,7 +67,7 @@ class MagazinesController(QObject):
             self.MagazinsTable.setItem(counter,2,ItemItemQty)
             self.MagazinsTable.setItem(counter,3,ItemIdItem)
             counter+=1 
-            
+  
     def _addMagazin(self):
         rowCount=self.MagazinsTable.rowCount()
         self.MagazinsTable.insertRow(rowCount)
@@ -107,9 +109,8 @@ class MagazinesController(QObject):
         if self._checkCorrectMagazineTable(MagazinsMappingList): 
             return
 
-        self.MagazinesController._saveMagazinsMapping(MagazinsMappingList)
-          
-            
+        self._saveMagazinsMapping(MagazinsMappingList)
+                     
     def _checkCorrectMagazineTable(self, MagazinsMappingList):
         for i in range (0, len(MagazinsMappingList)):
             magazine=MagazinsMappingList[i]
@@ -156,7 +157,7 @@ class MagazinesController(QObject):
         item=self.MagazinsTable.item(row, 0)
         if item is None: return
         magNum=item.text()        
-        self.window.llbl_magNumber.setText(magNum) 
+        self.form.window.lbl_magNumber.setText(magNum) 
     
     def _plusQty(self):
         qty=self._getQtyToChange()
@@ -192,29 +193,19 @@ class MagazinesController(QObject):
             return qty
                 
     def _getItemsList(self):
-        query='select ItemName from Items where hidden=0 order by ItemName'
-        result=self.DbConnector.getDataFromDb(query)    
+        result=self.DbConnector.getItems(False)    
         listItems=QStringList()
-        if result is None: return listItems
+        if result is None or len(result)==0: 
+            return listItems
         for element in result:
-            listItems.append(element[0])                 
+            listItems.append(element[1])                 
         return listItems    
-
-    def _getMagazinsItemsMap(self):
-        query= ('select idMagazins, itemName, ItemQty, Items.idItem from Magazins,'+
-        ' Items where Magazins.ItemId=Items.idItem')
-        result=self.DbConnector.getDataFromDb(query)
-        return result
-               
+           
     def _saveMagazinsMapping(self, magazinesMap):
         #Дописываем в таблицу предметов их id
         self._addIdToMagazinesMap(magazinesMap)
         #Записываем в БД приход/расход предметов
         result=self._inOutCommingItems(magazinesMap)
-        if not result:
-            self.message=Errors(u"Ошибка записи движений предметов")
-            self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show()             
         #Очищаем таблицу предметов
         if not self._dropMagazinesTable(): return
         #Записываем в таблицу предметов новые значения
@@ -230,33 +221,26 @@ class MagazinesController(QObject):
     def _addIdToMagazinesMap(self, magazinesMap):
         for row in magazinesMap:
             itemName=row[1]
-            itemId=self._getItemIdByName(itemName)
-            row.append(itemId)
+            item=self.DbConnector.getIdItemByName(itemName, False)
+            if item is not None and len(item)>0:
+                itemId=item[0][0]
+                row.append(itemId)
             
     def _inOutCommingItems(self, magazinesMap):
-        result=True
-        query='Select Magazins.ItemId, sum(Magazins.ItemQTY), Items.ItemName from Magazins, Items ' +\
-                'where Magazins.ItemId=Items.idItem ' +\
-                'group by ItemId '+\
-                'order by Items.itemName'
-
-        ItemsInOldTable=self.DbConnector.getDataFromDb(query)
+        ItemsInOldTable=self.DbConnector.getQtyOfItemsByType()
         ItemsInNewTable=self._groupMagazinesMapTable(magazinesMap)
         ItemMovementTable=self._getItemMovementTable(ItemsInOldTable, ItemsInNewTable)
-        query='Select max(IdMovement) from ItemsMovements'
-        result=self.DbConnector.getDataFromDb(query, 'one')[0]
+        result=self.DbConnector.getMaxMovementId()[0]
         if result is None:
-            result=0
-            
+            result=0    
         idRecharge=result+1
         for itemMovement in ItemMovementTable:
             idItem=itemMovement[0]
             date=datetime.datetime.now()
             OperationType=itemMovement[1]
             itemQty=itemMovement[2]
-            query='Insert into ItemsMovements (IdMovement, idItem, OperationDate, OperationType, qty) '+\
-                 'VALUES (%d, %d, \'%s\', \'%s\', %d)' %(idRecharge, idItem, date, OperationType, itemQty)
-            result=self.DbConnector.insertDataToDB(query)
+            result=self.DbConnector.addMovement(idRecharge, idItem, date, OperationType, itemQty)
+              
         #Печатаем отчеты
         if len(ItemMovementTable)==0:
             #печатаем отчет о загрузке магазинов
@@ -346,14 +330,11 @@ class MagazinesController(QObject):
   
     def _insertMagazine(self, param):
         #Получаем Id предмета по его имени
-        query='Select idItem from Items where ItemName Like \'%s\'' %(param["itemName"])
-        result=self.DbConnector.getDataFromDb(query)
+        result=self.DbConnector.getIdItemByName(param["itemName"],False)
         #Прописываем предмет в магазине
         if result is not None:
             itemId=result[0][0]
-            query='Insert into Magazins (idMagazins, ItemId, ItemQTY) values (%d, %d, %d)' %\
-                (param["magazineNumber"], itemId, param["itemQty"])
-            sucsess=self.DbConnector.insertDataToDB(query)
+            sucsess=self.DbConnector.addMagazin(param["magazineNumber"], itemId, param["itemQty"])
             if sucsess:
                 self.message=Errors(u"Данные записаны")
                 self.message.window.setWindowTitle(u'Результат операции')
@@ -368,23 +349,12 @@ class MagazinesController(QObject):
             self.message.window.show()                                  
     
     def _dropMagazinesTable(self):
-        query='Delete from Magazins'
-        return self.DbConnector.deleteDataFromTable(query) 
+        result=self.DbConnector.dropMagazinesTable()
+        return result 
     
-    
-    def _getItemIdByName(self, itemName):
-        query='Select idItem from Items Where ItemName like \'%s\'' %(itemName)
-        result=self.DbConnector.getDataFromDb(query)
-        return result[0][0]
-            
     def _makeRechargeReport(self, ItemsInOldTable, ItemsInNewTable):
         context=[]
-        query='select IM.IdMovement, Items.itemName, IM.OperationDate, IM.OperationType, '+\
-                'IM.qty from ItemsMovements as IM, Items '+\
-                'where IM.IdMovement=(select max(IdMovement) from ItemsMovements) '+\
-                'and IM.idItem=Items.idItem '+\
-                'order by Items.itemName'
-        itemMovementTable=self.DbConnector.getDataFromDb(query)
+        itemMovementTable=self.DbConnector.getMovements()
         if len(itemMovementTable)==0 or itemMovementTable is None:
             return
         context.append(dict(Text=''))
@@ -432,10 +402,7 @@ class MagazinesController(QObject):
         return context
                     
     def _makeMagazinesLoadReport(self):
-        query='select M.idMagazins, I.ItemName, M.ItemQTY from Magazins as M, Items as I '+\
-                'where M.ItemId=I.idItem'
-        result=self.DbConnector.getDataFromDb(query)
-        
+        result=self.DbConnector.getMagazinLoadTable()
         context=[]
         context.append(dict(Text=''))
         context.append(dict(Text='{:^35}'.format('Magazines load')))  
@@ -463,6 +430,11 @@ class MagazinesController(QObject):
         except Printer.PrinterHardwareException as e:
             self.emit(QtCore.SIGNAL('Printer is not ready'), e.value)
 
+    def _showMessage(self, header, message):
+        self.message=Errors(message)
+        self.message.window.setWindowTitle(header)
+        self.message.setParent(self)
+        self.message.window.show() 
     
 class NonEditColumnDelegate(QItemDelegate):
     def createEditor(self, parent, options, index):
