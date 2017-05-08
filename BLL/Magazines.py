@@ -285,7 +285,7 @@ class MagazinesController(QObject):
         for newItem in ItemsInNewTable:
             newItemId=newItem[0]
             oldItemQty=0
-            #Сравниваем предмет из новой таблице со списком предметов в таблице, полученной изБД
+            #Сравниваем предмет из новой таблице со списком предметов в таблице, полученной из БД
             for oldItem in ItemsInOldTable:
                 oldItemId=oldItem[0]
                 #Если предметы совпали, то получаем количество предметов из базы (старое, до обновления)
@@ -308,7 +308,7 @@ class MagazinesController(QObject):
                 itemMovement.append(self.OPERATION_OUTCOME)
                 itemMovement.append(qty)
             itemsMovementTable.append(itemMovement)
-               
+    
         #Перебираем предметы которые были в старой (из БД) таблице и выбираем только те, которых нет в 
         #новой таблице, заполненной в интерфейсе, т.е. их полностью выгрузили из магазинов. Это - расход
         for oldItem in ItemsInOldTable:
@@ -324,7 +324,8 @@ class MagazinesController(QObject):
                 itemMovement=[]
                 itemMovement.append(int(oldItemId))
                 itemMovement.append(self.OPERATION_OUTCOME)
-                itemMovement.append(oldItemQty) 
+                itemMovement.append(oldItemQty)
+                itemsMovementTable.append(itemMovement) 
         
         return itemsMovementTable    
   
