@@ -24,14 +24,15 @@ class Printer(QtCore.QThread):
         self._printCheck()
 
 
-    def printXReport(self): 
+    def printXReport(self, type='0'): 
          #Информация о накоплениях за день
         #Открываем порт
         self._openPort()         
-        self._sendCommand(0x45, '3')
+        self._sendCommand(0x45, type)
         self.msleep(100)
         self._getAnswer()
-        self.prn.close()
+        self._closePort()
+        #self.prn.close()
         
     def printZReport(self):
         #Открываем порт
@@ -39,11 +40,14 @@ class Printer(QtCore.QThread):
         self._sendCommand(0x78, 'K,3')
         self.msleep(100)
         self._getAnswer()
-        self.prn.close()
+        self._closePort()
+        #self.prn.close()
+        
         
     def printZReportByNum(self, start, end):
         self._openPort()         
-        self._sendCommand(0x49, '%d,%d' %(start, end))        
+        self._sendCommand(0x49, '%d,%d' %(start, end))
+        self._closePort()        
 
     def checkStatus(self):
         ready=True
@@ -115,6 +119,7 @@ class Printer(QtCore.QThread):
                 revertStr=byteStr[::-1]
                 status.append(revertStr)
                 print status
+        self._closePort()
         return status                
                
     def _getSettings(self):
@@ -154,6 +159,10 @@ class Printer(QtCore.QThread):
         except :
             raise PrinterHardwareException(u'Принтер не найден')
         
+    def _closePort(self):
+        if self.prn.isOpen():
+            self.prn.close()
+        
     def _printCheck(self):
         #Открываем порт
         self._openPort() 
@@ -161,6 +170,7 @@ class Printer(QtCore.QThread):
             self._printFiskCheck()
         elif self.checkType=='NotFisk':
             self._printNotFiskCheck()
+        self._closePort()
     
     def _printFiskCheck(self):
             #Открываем фискальный чек

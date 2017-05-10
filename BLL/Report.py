@@ -5,6 +5,7 @@ from PyQt4 import QtGui
 from PyQt4.Qt import QObject, QHeaderView
 from DAL.DBConnector import DbConnector
 import datetime
+import time
 import Printer.PrnDK350 as Printer
 from Errors import Errors
 
@@ -31,7 +32,7 @@ class ReportController(QObject):
         try:
             logMessages=self.printer.checkStatus()
             self.DbConnector.writeLog(logMessages)
-            self.printer.printXReport()
+            self.printer.printXReport('3')
         except Printer.PrinterHardwareException as e:
             self.emit(QtCore.SIGNAL('Printer is not ready'), e.value)
             
@@ -52,14 +53,15 @@ class ReportController(QObject):
     
     def _inkass(self):
         InkassInfo=self.DbConnector.getInfoForInkass()
-        if InkassInfo is None or len(InkassInfo)==0:
+        if InkassInfo[0] is None:
+            self._showMessage(u'Результат операции', u"Продажи отсутствуют.")
             return
         inkassPayment=InkassInfo[0]
         dateLastInkass=InkassInfo[1]
         idLastInkass=InkassInfo[2]
         context=[]
         context.append(dict(Text=''))
-        header='Encashment order $d:' %(idLastInkass+1)
+        header='Encashment order %d:' %((idLastInkass+1))
         context.append(dict(Text='{:^35}'.format(header)))
         context.append(dict(Text=''))
         context.append(dict(Text='{:^35}'.format('Begin of period: '+str(dateLastInkass))))
@@ -79,6 +81,10 @@ class ReportController(QObject):
             self._showMessage(u'Результат операции', u'Ошибка инкассации')
             
         self.printer.run(context, checkType='NotFisk')
+        time.sleep(3)
+        self.printer.printXReport('0')
+        time.sleep(3)
+        self.printer.printZReport()
             
     def _getPrnStatus(self):
         try:
