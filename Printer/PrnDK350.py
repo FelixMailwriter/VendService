@@ -28,7 +28,7 @@ class Printer(QtCore.QThread):
          #Информация о накоплениях за день
         #Открываем порт
         self._openPort()         
-        self._sendCommand(0x78, 'K,1')
+        self._sendCommand(0x45, '3')
         self.msleep(100)
         self._getAnswer()
         self.prn.close()

@@ -20,6 +20,7 @@ class ReportController(QObject):
         self.form.btn_XReport.clicked.connect(self._printXReport)
         self.form.btn_ZReport.clicked.connect(self._printZReport)
         self.form.btn_ZReportByNum.clicked.connect(self._printZReportByNum)
+        self.form.btn_Inkass.clicked.connect(self._inkass)
         self.form.btn_PrnStatus.clicked.connect(self._getPrnStatus)
         self.form.btn_GetLog.clicked.connect(self._getLog)
         self.form.btn_ClearLog.clicked.connect(self._clearLog)
@@ -47,10 +48,38 @@ class ReportController(QObject):
         if begin<=end:
             self.printer.printZReportByNum(begin, end)
         else:
-            self.message=Errors(u"Неправильный ввод")
-            self.message.window.setWindowTitle(u'Результат операции')
-            self.message.window.show()    
+            self._showMessage(u'Результат операции', u"Неправильный ввод")
+    
+    def _inkass(self):
+        InkassInfo=self.DbConnector.getInfoForInkass()
+        if InkassInfo is None or len(InkassInfo)==0:
+            return
+        inkassPayment=InkassInfo[0]
+        dateLastInkass=InkassInfo[1]
+        idLastInkass=InkassInfo[2]
+        context=[]
+        context.append(dict(Text=''))
+        header='Encashment order $d:' %(idLastInkass+1)
+        context.append(dict(Text='{:^35}'.format(header)))
+        context.append(dict(Text=''))
+        context.append(dict(Text='{:^35}'.format('Begin of period: '+str(dateLastInkass))))
+        context.append(dict(Text='{:^35}'.format('End of period: '+str(datetime.datetime.now()))))
+        context.append(dict(Text='--------------------------------------'))
+        context.append(dict(Text=''))
+        context.append(dict(Text='{:^35}'.format('Encashment sum: '+str(inkassPayment))))
+        context.append(dict(Text=''))
+        context.append(dict(Text='--------------------------------------'))
         
+        for s in context:
+            st=s['Text']
+            print st
+        if self.DbConnector.writeInkass(inkassPayment):
+            self._showMessage(u'Результат операции', u'Инкассация проведена')
+        else:
+            self._showMessage(u'Результат операции', u'Ошибка инкассации')
+            
+        self.printer.run(context, checkType='NotFisk')
+            
     def _getPrnStatus(self):
         try:
             logList=self.printer.checkStatus()
@@ -90,6 +119,10 @@ class ReportController(QObject):
         self.form.tbw_Log.setRowCount(0)
         self.DbConnector.clearLog('Printer')
         
-        
+    def _showMessage(self, header, message):
+        self.message=Errors(message)
+        self.message.window.setWindowTitle(header)
+        self.message.setParent(self)
+        self.message.window.show()         
             
           

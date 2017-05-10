@@ -87,7 +87,8 @@ class DbConnector():
             if cur is not None: cur.close()
             if conn is not None: conn.close()
         return True
-    
+
+#+++++ Items +++++    
     def getItems(self, hidden):
         query='SELECT idItem, itemName, ItemPrice from Items where hidden=%d' %(hidden)
         result = self.getDataFromDb(query)
@@ -125,6 +126,16 @@ class DbConnector():
         result=self.getDataFromDb(query, 'all')
         return result
 
+    def getQtyOfItemsByType(self):
+        query='Select Magazins.ItemId, sum(Magazins.ItemQTY), Items.ItemName from Magazins, Items ' +\
+                'where Magazins.ItemId=Items.idItem ' +\
+                'group by ItemId '+\
+                'order by Items.itemName'
+        result=self.getDataFromDb(query, 'all')
+        return result
+
+#+++++ Magazins +++++
+
     def addMagazin(self, idMagazins, ItemId, ItemQTY):
         query='Insert into Magazins (idMagazins, ItemId, ItemQTY) values (%d, %d, %d)' %\
             (idMagazins, ItemId, ItemQTY)
@@ -147,14 +158,24 @@ class DbConnector():
         result=self.getDataFromDb(query)
         return result
      
-    def getQtyOfItemsByType(self):
-        query='Select Magazins.ItemId, sum(Magazins.ItemQTY), Items.ItemName from Magazins, Items ' +\
-                'where Magazins.ItemId=Items.idItem ' +\
-                'group by ItemId '+\
-                'order by Items.itemName'
-        result=self.getDataFromDb(query, 'all')
-        return result
-    
+    def getMagazinesContainItem(self, idItem):
+        magList=''
+        query= ('select idMagazins, ItemQty, itemId from Magazins'+
+        ' where Magazins.ItemId=%d') %(idItem)
+        result=self.getDataFromDb(query)
+        if len(result)!=0:
+            for magazine in result:
+                magList+=str(magazine[0])+', '
+            magList=magList[:-2]
+        return magList
+ 
+    def getMagazinLoadTable(self):
+        query='select M.idMagazins, I.ItemName, M.ItemQTY from Magazins as M, Items as I '+\
+                'where M.ItemId=I.idItem'
+        result=self.getDataFromDb(query)
+        return result 
+
+#+++++ Movements +++++    
     def getMaxMovementId(self):
         query='Select max(IdMovement) from ItemsMovements'
         result=self.getDataFromDb(query, 'one')
@@ -174,24 +195,21 @@ class DbConnector():
                 'order by Items.itemName'
         result=self.getDataFromDb(query, 'all')
         return result
-                       
-    def getMagazinesContainItem(self, idItem):
-        magList=''
-        query= ('select idMagazins, ItemQty, itemId from Magazins'+
-        ' where Magazins.ItemId=%d') %(idItem)
-        result=self.getDataFromDb(query)
-        if len(result)!=0:
-            for magazine in result:
-                magList+=str(magazine[0])+', '
-            magList=magList[:-2]
-        return magList
-    
-    def getMagazinLoadTable(self):
-        query='select M.idMagazins, I.ItemName, M.ItemQTY from Magazins as M, Items as I '+\
-                'where M.ItemId=I.idItem'
-        result=self.getDataFromDb(query)
+
+    def getInfoForInkass(self):
+        query='Select sum(Sales.payment), max(Incas.IncasDate), max(Incas.idIncas) from Sales, Incas '+\
+                'where Sales.saleDate> (Select max(IncasDate) from Incas)'
+        result=self.getDataFromDb(query, 'one')
         return result
-        
+
+    def writeInkass(self, inkassPayment, inkassator=''):
+        query='INSERT INTO `vending`.`Incas` (`IncasDate`, `IncasSum`, `Incasator`) '+\
+                'VALUES (\'%s\', %d, \'%s\')' %(datetime.now(), inkassPayment, inkassator)
+        result=self.insertDataToDB(query)
+        return result
+                       
+#+++++ Log +++++
+  
     def writeLog(self, logMessages):
         for logMessage in logMessages:
             priority=logMessage.priority

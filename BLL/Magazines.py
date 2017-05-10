@@ -116,34 +116,24 @@ class MagazinesController(QObject):
             magazine=MagazinsMappingList[i]
             #Проверка заполнения номера магазина
             if magazine[0]==0:
-                self.message=Errors(u'Не указан номер магазина')
-                self.message.window.setWindowTitle(u'Ошибка')
-                self.message.window.show()
+                self._showMessage(u'Ошибка', u'Не указан номер магазина')
                 return True
             #Проверка числового значения в номере магазина
             if self._isNotNumber(magazine[0]):
-                self.message=Errors(u'В поле номера магазина не числовое значение')
-                self.message.window.setWindowTitle(u'Ошибка')
-                self.message.window.show()
+                self._showMessage(u'Ошибка', u'В поле номера магазина не числовое значение')
                 return True
             #Проверка заполнения поля Количество
             if magazine[2]=='0':
-                self.message=Errors(u'Не заполнено поле "Количество"')
-                self.message.window.setWindowTitle(u'Ошибка')
-                self.message.window.show()
+                self._showMessage(u'Ошибка', u'Не заполнено поле "Количество"')
                 return True
             #Проверка числового значения в поле Количество
             if self._isNotNumber(magazine[2]):
-                self.message=Errors(u'В поле "Количество" не числовое значение')
-                self.message.window.setWindowTitle(u'Ошибка')
-                self.message.window.show() 
+                self._showMessage(u'Ошибка', u'В поле "Количество" не числовое значение')
                 return True                          
             #Проверка уникальности номера магазина
             for j in range (i+1, len(MagazinsMappingList)):
                 if magazine[0]==MagazinsMappingList[j][0]:
-                    self.message=Errors(u'Дублируются номера магазинов')
-                    self.message.window.setWindowTitle(u'Ошибка')
-                    self.message.window.show()
+                    self._showMessage(u'Ошибка', u'Дублируются номера магазинов')
                     return True
         return False    
            
@@ -174,9 +164,7 @@ class MagazinesController(QObject):
         oldValue=int(self.MagazinsTable.item(row, 2).text())
         newValue=oldValue-qty
         if newValue<=0:
-            self.message=Errors(u'Удаляемое количество предметов больше имеющегося')
-            self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show()
+            self._showMessage(u'Ошибка', u'Удаляемое количество предметов больше имеющегося')
             return            
         self.MagazinsTable.item(row,2).setText(str(newValue))         
     
@@ -185,9 +173,7 @@ class MagazinesController(QObject):
         try:
             qty=(int)(value)
         except:
-            self.message=Errors(u'В поле "Количество" не числовое значение')
-            self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show() 
+            self._showMessage(u'Ошибка', u'В поле "Количество" не числовое значение')
             return 0                        
         else:
             return qty
@@ -337,17 +323,11 @@ class MagazinesController(QObject):
             itemId=result[0][0]
             sucsess=self.DbConnector.addMagazin(param["magazineNumber"], itemId, param["itemQty"])
             if sucsess:
-                self.message=Errors(u"Данные записаны")
-                self.message.window.setWindowTitle(u'Результат операции')
-                self.message.window.show()
-            else:            
-                self.message=Errors(u"Ошибка записи в базу данных")
-                self.message.window.setWindowTitle(u'Результат операции')
-                self.message.window.show()                    
+                self._showMessage(u'Результат операции', u"Данные записаны")
+            else: 
+                self._showMessage(u'Результат операции', u"Ошибка записи в базу данных")           
         else:
-            self.message=Errors(u"Ошибка выборки данных из базы")
-            self.message.window.setWindowTitle(u'Ошибка')
-            self.message.window.show()                                  
+            self._showMessage(u'Ошибка', u"Ошибка выборки данных из базы")
     
     def _dropMagazinesTable(self):
         result=self.DbConnector.dropMagazinesTable()
