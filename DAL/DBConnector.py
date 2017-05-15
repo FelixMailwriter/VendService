@@ -201,6 +201,11 @@ class DbConnector():
                 'where Sales.saleDate> (Select max(IncasDate) from Incas)'
         result=self.getDataFromDb(query, 'one')
         return result
+    
+    def getCashInNoteReseiver(self, lastIncasDate):
+        query='Select sum(NoteValue) from ReceivedNotes where DateReceiving>\'%s\'' %(lastIncasDate)
+        result=self.getDataFromDb(query, 'one')
+        return result
 
     def writeInkass(self, inkassPayment, inkassator=''):
         query='INSERT INTO `vending`.`Incas` (`IncasDate`, `IncasSum`, `Incasator`) '+\
