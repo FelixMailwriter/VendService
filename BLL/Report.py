@@ -57,11 +57,11 @@ class ReportController(QObject):
             self._showMessage(u'Результат операции', u"Продажи отсутствуют.")
             return
         inkassPayment=InkassInfo[0]
-        dateLastInkass=InkassInfo[1]
-        idLastInkass=InkassInfo[2]
+        idLastInkass=InkassInfo[1]
+        dateLastInkass=InkassInfo[2]
         cash=self.DbConnector.getCashInNoteReseiver(dateLastInkass)[0]
-        if cash[0] is None:
-            cash=0
+        #if cash[0] is None:
+        #    cash=0
         context=[]
         context.append(dict(Text=''))
         header='Encashment order %d:' %((idLastInkass+1))

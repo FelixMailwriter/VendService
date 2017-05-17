@@ -195,15 +195,21 @@ class MagazinesController(QObject):
         #Очищаем таблицу предметов
         if not self._dropMagazinesTable(): return
         #Записываем в таблицу предметов новые значения
+        isError=False
         for magazin in magazinesMap:
             param={}
             param["magazineNumber"]=(int)(magazin[0])
             param["itemName"]=magazin[1]
             param ["itemQty"]=int(magazin[2])
             param ["itemId"]=magazin[3]
-
-            self._insertMagazine(param)
+            if not self._insertMagazine(param):
+                isError=True
+        if isError:
+            self._showMessage(u'Результат операции', u"Ошибка записи в базу данных")
+        else:
+            self._showMessage(u'Результат операции', u"Данные записаны")
             
+               
     def _addIdToMagazinesMap(self, magazinesMap):
         for row in magazinesMap:
             itemName=row[1]
@@ -321,13 +327,9 @@ class MagazinesController(QObject):
         #Прописываем предмет в магазине
         if result is not None:
             itemId=result[0][0]
-            sucsess=self.DbConnector.addMagazin(param["magazineNumber"], itemId, param["itemQty"])
-            if sucsess:
-                self._showMessage(u'Результат операции', u"Данные записаны")
-            else: 
-                self._showMessage(u'Результат операции', u"Ошибка записи в базу данных")           
-        else:
-            self._showMessage(u'Ошибка', u"Ошибка выборки данных из базы")
+            success=self.DbConnector.addMagazin(param["magazineNumber"], itemId, param["itemQty"])
+            return success
+        return False
     
     def _dropMagazinesTable(self):
         result=self.DbConnector.dropMagazinesTable()

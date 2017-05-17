@@ -197,8 +197,10 @@ class DbConnector():
         return result
 
     def getInfoForInkass(self):
-        query='Select sum(Sales.payment), max(Incas.IncasDate), max(Incas.idIncas) from Sales, Incas '+\
-                'where Sales.saleDate> (Select max(IncasDate) from Incas)'
+        query='Select sum(d.payment) as cash, max(p.incasid) as lastIncasId, max(p.incasdate) as LastIncasDate from '+\
+                '(Select max(idIncas) as incasid, max(IncasDate) as incasdate from Incas) as p, (Select Sales.payment, '+\
+                'Sales.saleDate from Sales'+\
+                ' where Sales.saleDate> (Select max(IncasDate) from Incas)) as d'
         result=self.getDataFromDb(query, 'one')
         return result
     
