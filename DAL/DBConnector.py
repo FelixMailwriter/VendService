@@ -197,11 +197,21 @@ class DbConnector():
         return result
 
     def getInfoForInkass(self):
-        query='Select sum(d.payment) as cash, max(p.incasid) as lastIncasId, max(p.incasdate) as LastIncasDate from '+\
-                '(Select max(idIncas) as incasid, max(IncasDate) as incasdate from Incas) as p, (Select Sales.payment, '+\
-                'Sales.saleDate from Sales'+\
-                ' where Sales.saleDate> (Select max(IncasDate) from Incas)) as d'
+        query='Select max(IncasDate), max(idIncas) from Incas'
         result=self.getDataFromDb(query, 'one')
+        incasDate=result[0]
+        incasId=result[1]
+        query='Select sum(Sales.payment) from Sales where Sales.saleDate> \'%s\'' %(incasDate)
+        result=self.getDataFromDb(query, 'one')
+        accountedCash=result[0]
+        if accountedCash is None:
+            accountedCash=0
+        result=(accountedCash, incasId, incasDate)
+        #query='Select sum(d.payment) as cash, max(p.incasid) as lastIncasId, max(p.incasdate) as LastIncasDate from '+\
+        #        '(Select max(idIncas) as incasid, max(IncasDate) as incasdate from Incas) as p, (Select Sales.payment, '+\
+        #        'Sales.saleDate from Sales'+\
+        #        ' where Sales.saleDate> (Select max(IncasDate) from Incas)) as d'
+        #result=self.getDataFromDb(query, 'one')
         return result
     
     def getCashInNoteReseiver(self, lastIncasDate):

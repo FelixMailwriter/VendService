@@ -53,15 +53,16 @@ class ReportController(QObject):
     
     def _inkass(self):
         InkassInfo=self.DbConnector.getInfoForInkass()
-        if InkassInfo[0] is None:
-            self._showMessage(u'Результат операции', u"Продажи отсутствуют.")
-            return
-        inkassPayment=InkassInfo[0]
+        
+        #if InkassInfo[0] is None:
+        #    self._showMessage(u'Результат операции', u"Продажи отсутствуют.")
+        #    return
+        accountedCash=InkassInfo[0]
         idLastInkass=InkassInfo[1]
         dateLastInkass=InkassInfo[2]
         cash=self.DbConnector.getCashInNoteReseiver(dateLastInkass)[0]
-        #if cash[0] is None:
-        #    cash=0
+        if cash is None:
+            cash=0
         context=[]
         context.append(dict(Text=''))
         header='Encashment order %d:' %((idLastInkass+1))
@@ -71,9 +72,9 @@ class ReportController(QObject):
         context.append(dict(Text='{:^35}'.format('End of period: '+str(datetime.datetime.now()))))
         context.append(dict(Text='--------------------------------------'))
         context.append(dict(Text=''))
-        context.append(dict(Text='{:<35}{:>4}'.format('Summ of sales: ', str(inkassPayment))))
+        context.append(dict(Text='{:<35}{:>4}'.format('Summ of sales: ', str(accountedCash))))
         context.append(dict(Text=''))
-        context.append(dict(Text='{:<35}{:>4}'.format('Unaccounted sum: ', str(cash-inkassPayment))))
+        context.append(dict(Text='{:<35}{:>4}'.format('Unaccounted sum: ', str(cash-accountedCash))))
         context.append(dict(Text=''))
         context.append(dict(Text='{:<35}{:>4}'.format('Total sum: ', str(cash))))
         context.append(dict(Text=''))        
@@ -83,14 +84,12 @@ class ReportController(QObject):
             st=s['Text']
             print st
             
-        if self.DbConnector.writeInkass(inkassPayment):
+        if self.DbConnector.writeInkass(accountedCash):
             self._showMessage(u'Результат операции', u'Инкассация проведена')
         else:
             self._showMessage(u'Результат операции', u'Ошибка инкассации')
             
         self.printer.run(context, checkType='NotFisk')
-        #time.sleep(3)
-        #self.printer.printXReport('0')
         time.sleep(3)
         self.printer.printZReport()
             
