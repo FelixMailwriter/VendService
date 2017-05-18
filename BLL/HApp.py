@@ -7,6 +7,7 @@ from BLL.ItemsController import ItemsController
 from Magazines import MagazinesController
 from Report import ReportController
 from Errors import Errors
+from BDManagement import BDManagement
 
 
 class HApp(QObject):
@@ -28,6 +29,8 @@ class MainWindow(QObject):
         self.ItemsController=ItemsController(self)
         self.MagazinesController=MagazinesController(self)
         self.ReportController=ReportController(self)
+        
+        self.DBController=BDManagement(self) #удалить на рабочей машине
 
         #Подписываемся на событие "Принтер не найден"
         self.connect(self.MagazinesController, QtCore.SIGNAL("Printer is not ready"), self._prnIsNotFound)
