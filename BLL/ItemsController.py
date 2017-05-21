@@ -96,8 +96,10 @@ class ItemsController(QObject):
             return
         #Проверяем был ли предмет хотя бы раз продан
         sellsOfItem=self.DbConnector.sellsOfItem(idItem)
-        if len(sellsOfItem)>0:
-            #Предмет был продан - делаем его невидимым
+        #Проверяем есть ли предмет в таблице движений
+        itemMovements=self.DbConnector.movementsOfItem(idItem)
+        if len(sellsOfItem)>0 or itemMovements>0:
+            #Предмет был продан или есть движения с ним - делаем его невидимым
             result=self.DbConnector.setItemHide(idItem, True)
             if not result:
                 message=u'Ошибка базы данных. Предмет не удален.'

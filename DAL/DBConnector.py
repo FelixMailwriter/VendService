@@ -115,6 +115,11 @@ class DbConnector():
         query='Select idSales, saleDate, saledItemId, price from Sales where saledItemId=%d' %(idItem)
         result=self.getDataFromDb(query, 'all')
         return result
+    
+    def movementsOfItem(self, idItem):
+        query='Select IdMovement, idItem, OperationDate, OperationType, qty from ItemsMovements where idItem=%d' %(idItem)
+        result=self.getDataFromDb(query, 'all')
+        return result        
 
     def setItemHide(self, idItem, isHidden):
         query='Update vending.Items SET hidden=%d WHERE idItem=%d' %(isHidden, idItem)
