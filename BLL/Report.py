@@ -20,6 +20,7 @@ class ReportController(QObject):
         #Прописываем события кнопок
         self.form.btn_XReport.clicked.connect(self._printXReport)
         self.form.btn_ZReport.clicked.connect(self._printZReport)
+        self.form.btn_ZReport.setEnabled(False)
         self.form.btn_ZReportByNum.clicked.connect(self._printZReportByNum)
         self.form.btn_Inkass.clicked.connect(self._inkass)
         self.form.btn_PrnStatus.clicked.connect(self._getPrnStatus)
@@ -100,7 +101,8 @@ class ReportController(QObject):
             
         self.printer.run(context, checkType='NotFisk')
         time.sleep(3)
-        self.printer.printZReport()
+        #self.printer.printZReport()
+        self._printZReport()
             
     def _getPrnStatus(self):
         try:
