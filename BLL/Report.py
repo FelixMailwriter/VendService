@@ -32,15 +32,19 @@ class ReportController(QObject):
         try:
             logMessages=self.printer.checkStatus()
             self.DbConnector.writeLog(logMessages)
-            self.printer.printXReport('3')
+            self.printer.printXReport('3') #Печать Х отчета без закрытия дня
         except Printer.PrinterHardwareException as e:
             self.emit(QtCore.SIGNAL('Printer is not ready'), e.value)
             
     def _printZReport(self):
-        logMessages=self.printer.checkStatus()
-        self.DbConnector.writeLog(logMessages)
-        self.printer.printZReport()
-    
+        try:
+            self.printer.printXReport('0') # Печать Х-отчета с закрытием дня
+            logMessages=self.printer.checkStatus()
+            self.DbConnector.writeLog(logMessages)
+            self.printer.printZReport()
+        except Printer.PrinterHardwareException as e:
+            self.emit(QtCore.SIGNAL('Printer is not ready'), e.value)
+                
     def _printZReportByNum(self):
         begin=self.form.spn_Begin.value()
         end=self.form.spn_End.value()
@@ -59,6 +63,8 @@ class ReportController(QObject):
         #    return
         accountedCash=InkassInfo[0]
         idLastInkass=InkassInfo[1]
+        if idLastInkass is None:
+            idLastInkass=0
         dateLastInkass=InkassInfo[2]
         cash=self.DbConnector.getCashInNoteReseiver(dateLastInkass)[0]
         if cash is None:

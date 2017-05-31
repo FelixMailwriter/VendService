@@ -169,7 +169,7 @@ class MagazinesController(QObject):
         self.MagazinsTable.item(row,2).setText(str(newValue))         
     
     def _getQtyToChange(self):
-        value=self.window.le_qty.text()
+        value=self.form.window.le_qty.text()
         try:
             qty=(int)(value)
         except:
