@@ -38,7 +38,10 @@ class ReportController(QObject):
             
     def _printZReport(self):
         try:
+            logMessages=self.printer.checkStatus()
+            self.DbConnector.writeLog(logMessages)
             self.printer.printXReport('0') # Печать Х-отчета с закрытием дня
+            time.sleep(5)
             logMessages=self.printer.checkStatus()
             self.DbConnector.writeLog(logMessages)
             self.printer.printZReport()
