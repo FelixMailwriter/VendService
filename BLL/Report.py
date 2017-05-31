@@ -62,9 +62,6 @@ class ReportController(QObject):
     def _inkass(self):
         InkassInfo=self.DbConnector.getInfoForInkass()
         
-        #if InkassInfo[0] is None:
-        #    self._showMessage(u'Результат операции', u"Продажи отсутствуют.")
-        #    return
         accountedCash=InkassInfo[0]
         idLastInkass=InkassInfo[1]
         if idLastInkass is None:

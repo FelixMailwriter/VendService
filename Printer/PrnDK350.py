@@ -256,7 +256,7 @@ class Printer(QtCore.QThread):
                 num=int(chr(asciiCode),16)          #записываем ее ascii-коды прибаляя к нему 0x30
                 bytesParam.append(num+0x30)
             else:
-                bytesParam.append(asciiCode)        #Если просто симовл  записываем его ascii-код
+                bytesParam.append(asciiCode)        #Если просто симовол  записываем его ascii-код
         return bytesParam
 
     def _getBCC(self, command, paramsLength):
