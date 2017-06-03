@@ -145,5 +145,6 @@ class ReportController(QObject):
         self.message.window.setWindowTitle(header)
         self.message.setParent(self)
         self.message.window.show()         
-            
+    
+               
           

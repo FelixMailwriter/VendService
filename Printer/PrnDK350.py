@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from PyQt4 import QtCore
 import serial
+import time
 from ConfigParser import ConfigParser
 from enum import __repr__
 import binascii
@@ -203,6 +204,23 @@ class Printer(QtCore.QThread):
         params=r'{}{}{}{}'.format(text, '\t',taxCode, price)  
         return params
     
+    def _getDayMoney(self):
+        self._openPort() 
+        self._sendCommand(0x46,'')
+        answer=self._getAnswer()
+        self._closePort()
+        summ=(int(answer[7:17])+(int(answer[17:19]))/10.0)
+        print summ
+        return summ
+        
+    def _setDayMoney(self, summ):
+        param='A%d' %(summ)
+        self._openPort() 
+        self._sendCommand(0x46,param)
+        answer=self._getAnswer()
+        self._closePort()
+        print answer                
+        
     def _sendCommand(self, commandCode, commandParams):
         command=self._makeCommand(commandCode, commandParams)
         self.prn.write(command)
@@ -280,7 +298,7 @@ class Printer(QtCore.QThread):
         print 'wait for answer...'
         for i in range (1,4):
             print 'iter %d' %(i)
-            l=self.prn.in_waiting
+            l=self.prn.inWaiting()
             print l
             if l>0:
                 data=self.prn.read(l)
