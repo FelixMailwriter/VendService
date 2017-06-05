@@ -204,7 +204,7 @@ class Printer(QtCore.QThread):
         params=r'{}{}{}{}'.format(text, '\t',taxCode, price)  
         return params
     
-    def _getDayMoney(self):
+    def getDayMoney(self):
         self._openPort() 
         self._sendCommand(0x46,'')
         answer=self._getAnswer()
@@ -213,7 +213,7 @@ class Printer(QtCore.QThread):
         print summ
         return summ
         
-    def _setDayMoney(self, summ):
+    def setDayMoney(self, summ):
         param='A%d' %(summ)
         self._openPort() 
         self._sendCommand(0x46,param)
